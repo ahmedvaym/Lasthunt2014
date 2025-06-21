@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales & Request Purchase Orders</title>
+    <!-- Include jsPDF and jsPDF-AutoTable libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sales & Request Purchase Orders</h1>
+        
+        <div class="button-group">
+            <button id="salesBtn" class="active">Sales</button>
+            <button id="requestPurchaseBtn">Request Purchase</button>
+            <button id="viewSalesBtn">View Sales</button>
+            <button id="viewPurchaseBtn">View Purchase Orders</button>
+        </div>
+        
+        <!-- Sales Section -->
+        <div id="salesSection" class="section active">
+            <h2>New Sale</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="saleDate">Date</label>
+                    <input type="date" id="saleDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerName">Customer Name</label>
+                    <input type="text" id="customerName" placeholder="Enter customer name">
+                </div>
+                <div class="form-group">
+                    <label for="invoiceNumber">Invoice Number</label>
+                    <input type="text" id="invoiceNumber" placeholder="INV-0001">
+                </div>
+            </div>
+            
+            <h3>Items</h3>
+            <div id="salesItemsContainer">
+                <div class="item-row">
+                    <div class="form-group">
+                        <label for="itemCategory1">Category</label>
+                        <select id="itemCategory1" class="item-category">
+                            <option value="">Select Category</option>
+                            <option value="Wheel Barrow">Wheel Barrow</option>
+                            <option value="Fiber Items">Fiber Items</option>
+                            <option value="Hardware">Hardware</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemName1">Item Description</label>
+                        <input type="text" id="itemName1" class="item-name" placeholder="Item description">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemQty1">Quantity</label>
+                        <input type="number" id="itemQty1" class="item-qty" min="1" value="1" oninput="calculateSalesRowTotal(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPrice1">Price</label>
+                        <input type="number" id="itemPrice1" class="item-price" min="0" step="0.01" placeholder="0.00" oninput="calculateSalesRowTotal(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Total</label>
+                        <div class="item-total">0.00</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeSalesItem(this)">Remove</button>
+                </div>
+            </div>
+            
+            <button class="add-btn" onclick="addSalesItem()">Add Item</button>
+            
+            <div class="summary">
+                Total Amount: <span id="salesTotalAmount" class="total-display">0.00</span>
+            </div>
+            
+            <div class="button-group">
+                <button class="save-btn" onclick="saveSale()">Save Sale</button>
+                <button class="download-btn" onclick="downloadSale()">Download CSV</button>
+                <button class="pdf-btn" onclick="exportSaleToPDF()">Export PDF</button>
+            </div>
+            
+            <div id="salesAlert" class="alert hidden"></div>
+        </div>
+        
+        <!-- Request Purchase Order Section -->
+        <div id="requestPurchaseSection" class="section">
+            <h2>Request Purchase Order</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="poDate">Date</label>
+                    <input type="date" id="poDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplierName">Supplier Name</label>
+                    <input type="text" id="supplierName" placeholder="Enter supplier name">
+                </div>
+                <div class="form-group">
+                    <label for="poNumber">PO Number</label>
+                    <input type="text" id="poNumber" placeholder="PO-0001">
+                </div>
+            </div>
+            
+            <h3>Items Requested</h3>
+            <div id="poItemsContainer">
+                <div class="item-row">
+                    <div class="form-group">
+                        <label for="poItemName1">Item Description</label>
+                        <input type="text" id="poItemName1" class="po-item-name" placeholder="Item description">
+                    </div>
+                    <div class="form-group">
+                        <label for="poItemQty1">Quantity</label>
+                        <input type="number" id="poItemQty1" class="po-item-qty" min="1" value="1" oninput="calculatePORowTotal(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="poItemUnit1">Unit</label>
+                        <select id="poItemUnit1" class="po-item-unit">
+                            <option value="Pcs">Pcs</option>
+                            <option value="Kg">Kg</option>
+                            <option value="Ltr">Ltr</option>
+                            <option value="Box">Box</option>
+                            <option value="Set">Set</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="poItemPrice1">Unit Price</label>
+                        <input type="number" id="poItemPrice1" class="po-item-price" min="0" step="0.01" placeholder="0.00" oninput="calculatePORowTotal(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Total</label>
+                        <div class="po-item-total">0.00</div>
+                    </div>
+                    <button class="remove-btn" onclick="removePOItem(this)">Remove</button>
+                </div>
+            </div>
+            
+            <button class="add-btn" onclick="addPOItem()">Add Item</button>
+            
+            <div class="summary">
+                Total Amount: <span id="poTotalAmount" class="total-display">0.00</span>
+            </div>
+            
+            <div class="button-group">
+                <button class="save-btn" onclick="savePurchaseOrder()">Save Request</button>
+                <button class="download-btn" onclick="downloadPurchaseOrder()">Download CSV</button>
+                <button class="pdf-btn" onclick="exportPOToPDF()">Export PDF</button>
+            </div>
+            
+            <div id="poAlert" class="alert hidden"></div>
+        </div>
+        
+        <!-- View Sales Section -->
+        <div id="viewSalesSection" class="section">
+            <h2>Sales Records</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="salesStartDate">From Date</label>
+                    <input type="date" id="salesStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="salesEndDate">To Date</label>
+                    <input type="date" id="salesEndDate">
+                </div>
+                <div class="form-group">
+                    <label for="salesCustomerFilter">Customer Filter</label>
+                    <input type="text" id="salesCustomerFilter" placeholder="Filter by customer">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="filterSales()">Filter</button>
+                <button class="download-btn" onclick="downloadAllSales()">Download All CSV</button>
+                <button class="pdf-btn" onclick="exportAllSalesToPDF()">Export All PDF</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table id="salesTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Invoice No.</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- View Purchase Orders Section -->
+        <div id="viewPurchaseSection" class="section">
+            <h2>Purchase Order Records</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="poStartDate">From Date</label>
+                    <input type="date" id="poStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="poEndDate">To Date</label>
+                    <input type="date" id="poEndDate">
+                </div>
+                <div class="form-group">
+                    <label for="poSupplierFilter">Supplier Filter</label>
+                    <input type="text" id="poSupplierFilter" placeholder="Filter by supplier">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="filterPurchaseOrders()">Filter</button>
+                <button class="download-btn" onclick="downloadAllPurchaseOrders()">Download All CSV</button>
+                <button class="pdf-btn" onclick="exportAllPOsToPDF()">Export All PDF</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table id="purchaseTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>PO Number</th>
+                            <th>Supplier</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+   <script src="script.js"></script>
+</body>
+</html>
