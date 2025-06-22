@@ -11,6 +11,66 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
+        /* Preloader Animation */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        
+        .last-hunt {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .last-hunt span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(100%);
+            animation: drizzle 0.5s forwards;
+        }
+        
+        @keyframes drizzle {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .loading-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 20px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            width: 0;
+            background: #fff;
+            animation: load 2.5s forwards;
+            border-radius: 2px;
+        }
+        
+        @keyframes load {
+            to { width: 100%; }
+        }
+        
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
@@ -37,6 +97,7 @@
             color: #333;
             line-height: 1.6;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .container {
@@ -46,6 +107,7 @@
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             overflow: hidden;
+            display: none; /* Initially hidden until preloader finishes */
         }
 
         header {
@@ -713,10 +775,60 @@
                 left: 10px;
                 font-size: 0.9rem;
             }
+            
+            .last-hunt {
+                font-size: 2rem;
+                letter-spacing: 0.3rem;
+            }
+        }
+        
+        /* Full screen styles */
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            border-radius: 0;
+            box-shadow: none;
+            height: 100vh;
+            max-width: 100%;
+        }
+        
+        .tab-content {
+            height: calc(100vh - 180px);
+            overflow-y: auto;
+        }
+        
+        #browse .tab-content {
+            height: calc(100vh - 220px);
         }
     </style>
 </head>
 <body>
+    <!-- Preloader Animation -->
+    <div id="preloader">
+        <div class="last-hunt" id="lastHuntText">
+            <span>L</span>
+            <span>A</span>
+            <span>S</span>
+            <span>T</span>
+            <span style="width: 1rem;"></span>
+            <span>H</span>
+            <span>U</span>
+            <span>N</span>
+            <span>T</span>
+        </div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+    
     <div class="container">
         <header>
             <h1>Purchase Order Management System</h1>
@@ -740,13 +852,13 @@
             <div class="category-tabs">
                 <div class="category-tab active" data-category="all">All Items</div>
                 <div class="category-tab" data-category="fiberglass">Fiberglass & Raw Materials</div>
-                <div class="category-tab" data-category="paints">Paints</div>
+                <div class="category-tab" data-category="paints">Paints & Coatings</div>
                 <div class="category-tab" data-category="sanding">Sanding & Cutting</div>
                 <div class="category-tab" data-category="hardware">Hardware</div>
                 <div class="category-tab" data-category="electric">Electrical</div>
-                <div class="category-tab" data-category="drillbits">Drill Bits</div>
-                <div class="category-tab" data-category="taperolls">Tape Rolls</div>
-                <div class="category-tab" data-category="general">General Items</div>
+                <div class="category-tab" data-category="tools">Tools & Equipment</div>
+                <div class="category-tab" data-category="safety">Safety Gear</div>
+                <div class="category-tab" data-category="consumables">Consumables</div>
             </div>
             
             <div class="items-container">
@@ -775,13 +887,13 @@
                 <label for="itemCategory" class="form-label">Category*</label>
                 <select class="form-control" id="itemCategory">
                     <option value="fiberglass">Fiberglass & Raw Materials</option>
-                    <option value="paints">Paints</option>
-                    <option value="sanding">Sanding Disks & Cutting Wheels</option>
-                    <option value="hardware">Nails, Nuts, Washers, Screws</option>
-                    <option value="electric">Electrical Items</option>
-                    <option value="drillbits">Drill Bits</option>
-                    <option value="taperolls">Tape Rolls</option>
-                    <option value="general">General Items</option>
+                    <option value="paints">Paints & Coatings</option>
+                    <option value="sanding">Sanding & Cutting</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="electric">Electrical</option>
+                    <option value="tools">Tools & Equipment</option>
+                    <option value="safety">Safety Gear</option>
+                    <option value="consumables">Consumables</option>
                 </select>
             </div>
             <div class="form-group">
@@ -890,7 +1002,7 @@
             
             <div class="category-tabs">
                 <div class="category-tab active" data-category="all">All Items</div>
-                <div class="category-tab" data-category="low">Low Stock</div>
+                <div class="category-tab" data-category="low">Low Stock (<5)</div>
                 <div class="category-tab" data-category="out">Out of Stock</div>
             </div>
             
@@ -971,6 +1083,8 @@
         const stockItemsList = document.getElementById('stockItemsList');
         const searchStockInput = document.getElementById('searchStock');
         const clearStockSearchBtn = document.getElementById('clearStockSearch');
+        const preloader = document.getElementById('preloader');
+        const lastHuntText = document.getElementById('lastHuntText');
 
         // Current item being edited
         let currentEditItem = null;
@@ -982,356 +1096,160 @@
         const itemsRef = database.ref('items');
         const poRef = database.ref('currentPO');
 
-        // Image modal functionality
-        span.onclick = function() {
-            modal.style.display = "none";
+        // Animate "LAST HUNT" text on load
+        function animateLastHuntText() {
+            const letters = lastHuntText.querySelectorAll('span');
+            letters.forEach((letter, index) => {
+                letter.style.animationDelay = `${index * 0.1}s`;
+            });
+            
+            // After animation completes, show main content
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                    document.querySelector('.container').style.display = 'block';
+                    
+                    // Initialize the app
+                    initializeApp();
+                }, 500);
+            }, 3000); // Match this with the loading bar animation duration
         }
 
-        modal.onclick = function(event) {
-            if (event.target === modal) {
+        // Initialize the application after preloader
+        function initializeApp() {
+            // Image modal functionality
+            span.onclick = function() {
                 modal.style.display = "none";
             }
-        }
 
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                
-                if (tabId) {
-                    // Main tabs
-                    document.querySelectorAll('.tab-content').forEach(content => {
-                        content.classList.remove('active');
-                    });
-                    document.getElementById(tabId).classList.add('active');
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
                     
-                    document.querySelectorAll('.tabs .tab').forEach(t => {
+                    if (tabId) {
+                        // Main tabs
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            content.classList.remove('active');
+                        });
+                        document.getElementById(tabId).classList.add('active');
+                        
+                        document.querySelectorAll('.tabs .tab').forEach(t => {
+                            t.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        // Refresh views when switching tabs
+                        if (tabId === 'browse') {
+                            const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
+                            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                            loadItems(category);
+                        } else if (tabId === 'po') {
+                            loadPO();
+                        } else if (tabId === 'add') {
+                            loadItemsForEditing();
+                            resetForm();
+                        } else if (tabId === 'stock') {
+                            loadStockItems();
+                        }
+                    }
+                });
+            });
+
+            // Category tab switching (Browse tab)
+            document.querySelectorAll('#browse .category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    
+                    document.querySelectorAll('#browse .category-tab').forEach(t => {
                         t.classList.remove('active');
                     });
                     this.classList.add('active');
                     
-                    // Refresh views when switching tabs
-                    if (tabId === 'browse') {
-                        const activeCategoryTab = document.querySelector('.category-tabs .active');
-                        const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-                        loadItems(category);
-                    } else if (tabId === 'po') {
-                        loadPO();
-                    } else if (tabId === 'add') {
-                        loadItemsForEditing();
-                        resetForm();
-                    } else if (tabId === 'stock') {
-                        loadStockItems();
-                    }
-                }
-            });
-        });
-
-        // Category tab switching (Browse tab)
-        document.querySelectorAll('#browse .category-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const category = this.getAttribute('data-category');
-                
-                document.querySelectorAll('#browse .category-tab').forEach(t => {
-                    t.classList.remove('active');
+                    loadItems(category);
                 });
-                this.classList.add('active');
-                
-                loadItems(category);
             });
-        });
 
-        // Category tab switching (Stock tab)
-        document.querySelectorAll('#stock .category-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const category = this.getAttribute('data-category');
-                
-                document.querySelectorAll('#stock .category-tab').forEach(t => {
-                    t.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                loadStockItems(category);
-            });
-        });
-
-        // Load items from Firebase
-        function loadItems(category = 'all') {
-            itemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
-            
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
-                allItems = items; // Store all items for stock management
-                displayItems(items, category);
-                updateTotalItemsCount(items);
-            }).catch(error => {
-                console.error('Error loading items:', error);
-                showNotification('Error loading items', true);
-            });
-        }
-
-        // Update total items counter
-        function updateTotalItemsCount(items) {
-            const itemCount = Object.keys(items).length;
-            totalItemsCount.textContent = itemCount;
-            
-            if (itemCount > 0) {
-                totalItemsCounter.style.display = 'block';
-            } else {
-                totalItemsCounter.style.display = 'none';
-            }
-        }
-
-        // Display items in list view
-        function displayItems(items, category = 'all') {
-            itemsContainer.innerHTML = '';
-            
-            let filteredItems = Object.values(items);
-            
-            // Filter by category if not 'all'
-            if (category !== 'all') {
-                filteredItems = filteredItems.filter(item => item.category === category);
-            }
-            
-            // Filter by search term if any
-            const searchTerm = searchItemsInput.value.toLowerCase();
-            if (searchTerm) {
-                filteredItems = filteredItems.filter(item => 
-                    item.code.toLowerCase().includes(searchTerm) || 
-                    item.name.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            if (filteredItems.length === 0) {
-                itemsContainer.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <i>🔍</i>
-                        <h3>No items found</h3>
-                        <p>Try a different search or category</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            filteredItems.forEach(item => {
-                const itemRow = document.createElement('div');
-                itemRow.className = 'item-row';
-                itemRow.innerHTML = `
-                    <div class="item-image">
-                        <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
-                    </div>
-                    <div class="item-details">
-                        <div class="item-code">${item.code}</div>
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
-                        <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
-                    </div>
-                    <div class="item-actions">
-                        <input type="number" class="quantity-input" value="1" min="1">
-                        <button class="btn btn-primary btn-sm add-to-po" data-code="${item.code}">Add to PO</button>
-                    </div>
-                `;
-                itemsContainer.appendChild(itemRow);
-            });
-            
-            // Add event listeners to "Add to PO" buttons
-            document.querySelectorAll('.add-to-po').forEach(button => {
-                button.addEventListener('click', function() {
-                    const code = this.getAttribute('data-code');
-                    const item = filteredItems.find(i => i.code === code);
-                    const quantity = parseInt(this.parentElement.querySelector('.quantity-input').value) || 1;
+            // Category tab switching (Stock tab)
+            document.querySelectorAll('#stock .category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
                     
-                    addToPO(item, quantity);
-                    showNotification('Item added to PO');
-                });
-            });
-
-            // Add click event to item images for preview
-            document.querySelectorAll('.item-image img').forEach(img => {
-                img.addEventListener('click', function() {
-                    modal.style.display = "block";
-                    modalImg.src = this.src;
-                });
-            });
-        }
-
-        // Load stock items
-        function loadStockItems(category = 'all') {
-            stockItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading stock items...</p></div>';
-            
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
-                allItems = items; // Store all items for stock management
-                displayStockItems(items, category);
-            }).catch(error => {
-                console.error('Error loading stock items:', error);
-                showNotification('Error loading stock items', true);
-            });
-        }
-
-        // Display stock items
-        function displayStockItems(items, category = 'all') {
-            stockItemsList.innerHTML = '';
-            
-            let filteredItems = Object.values(items);
-            
-            // Filter by search term if any
-            const searchTerm = searchStockInput.value.toLowerCase();
-            if (searchTerm) {
-                filteredItems = filteredItems.filter(item => 
-                    item.code.toLowerCase().includes(searchTerm) || 
-                    item.name.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            // Filter by stock status
-            if (category === 'low') {
-                filteredItems = filteredItems.filter(item => 
-                    item.stock !== undefined && item.stock > 0 && item.stock <= LOW_STOCK_THRESHOLD
-                );
-            } else if (category === 'out') {
-                filteredItems = filteredItems.filter(item => 
-                    item.stock !== undefined && item.stock <= 0
-                );
-            }
-            
-            if (filteredItems.length === 0) {
-                stockItemsList.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <i>📦</i>
-                        <h3>No items found</h3>
-                        <p>${category === 'all' ? 'No items in inventory' : 
-                           category === 'low' ? 'No low stock items' : 'No out of stock items'}</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Sort by stock level (lowest first)
-            filteredItems.sort((a, b) => {
-                const stockA = a.stock !== undefined ? a.stock : Infinity;
-                const stockB = b.stock !== undefined ? b.stock : Infinity;
-                return stockA - stockB;
-            });
-            
-            filteredItems.forEach(item => {
-                const stockItemRow = document.createElement('div');
-                stockItemRow.className = 'stock-item-row';
-                
-                // Determine stock status color
-                let stockStatus = 'N/A';
-                let stockColor = '#7f8c8d';
-                
-                if (item.stock !== undefined) {
-                    if (item.stock <= 0) {
-                        stockStatus = 'Out of Stock';
-                        stockColor = '#e74c3c';
-                    } else if (item.stock <= LOW_STOCK_THRESHOLD) {
-                        stockStatus = `Low Stock (${item.stock})`;
-                        stockColor = '#f39c12';
-                    } else {
-                        stockStatus = `In Stock (${item.stock})`;
-                        stockColor = '#27ae60';
-                    }
-                }
-                
-                stockItemRow.innerHTML = `
-                    <div class="stock-item-image">
-                        <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
-                    </div>
-                    <div class="stock-item-details">
-                        <div class="stock-item-code">${item.code}</div>
-                        <div class="stock-item-name">${item.name}</div>
-                        <div class="stock-item-stock" style="color: ${stockColor}">${stockStatus}</div>
-                    </div>
-                    <div class="stock-item-actions">
-                        <input type="number" class="stock-input" value="${item.stock !== undefined ? item.stock : ''}" placeholder="Stock" min="0">
-                        <button class="btn btn-primary btn-sm update-stock" data-code="${item.code}">Update</button>
-                    </div>
-                `;
-                stockItemsList.appendChild(stockItemRow);
-            });
-            
-            // Add event listeners to update stock buttons
-            document.querySelectorAll('.update-stock').forEach(button => {
-                button.addEventListener('click', function() {
-                    const code = this.getAttribute('data-code');
-                    const stockInput = this.parentElement.querySelector('.stock-input');
-                    const newStock = parseInt(stockInput.value) || 0;
-                    
-                    updateStock(code, newStock);
-                });
-            });
-
-            // Add click event to item images for preview
-            document.querySelectorAll('.stock-item-image img').forEach(img => {
-                img.addEventListener('click', function() {
-                    modal.style.display = "block";
-                    modalImg.src = this.src;
-                });
-            });
-        }
-
-        // Update stock for an item
-        function updateStock(code, newStock) {
-            // Find the item key in Firebase
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || {};
-                let itemKey = null;
-                
-                for (const key in items) {
-                    if (items[key].code === code) {
-                        itemKey = key;
-                        break;
-                    }
-                }
-                
-                if (!itemKey) {
-                    showNotification('Item not found', true);
-                    return;
-                }
-                
-                // Update the stock
-                itemsRef.child(itemKey).update({ stock: newStock })
-                    .then(() => {
-                        showNotification('Stock updated successfully');
-                        
-                        // Reload stock items
-                        const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
-                        const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-                        loadStockItems(category);
-                        
-                        // Update the item in allItems
-                        allItems[itemKey].stock = newStock;
-                    })
-                    .catch(error => {
-                        console.error('Error updating stock:', error);
-                        showNotification('Error updating stock', true);
+                    document.querySelectorAll('#stock .category-tabs .category-tab').forEach(t => {
+                        t.classList.remove('active');
                     });
+                    this.classList.add('active');
+                    
+                    loadStockItems(category);
+                });
             });
-        }
 
-        // Load items for editing
-        function loadItemsForEditing() {
-            editItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
-            
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
+            // Load items from Firebase
+            function loadItems(category = 'all') {
+                itemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
                 
-                if (Object.keys(items).length === 0) {
-                    editItemsList.innerHTML = `
-                        <div class="empty-state">
-                            <i>📦</i>
-                            <h3>No items in inventory</h3>
-                            <p>Add your first item using the form above</p>
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || [];
+                    allItems = items; // Store all items for stock management
+                    displayItems(items, category);
+                    updateTotalItemsCount(items);
+                }).catch(error => {
+                    console.error('Error loading items:', error);
+                    showNotification('Error loading items', true);
+                });
+            }
+
+            // Update total items counter
+            function updateTotalItemsCount(items) {
+                const itemCount = Object.keys(items).length;
+                totalItemsCount.textContent = itemCount;
+                
+                if (itemCount > 0) {
+                    totalItemsCounter.style.display = 'block';
+                } else {
+                    totalItemsCounter.style.display = 'none';
+                }
+            }
+
+            // Display items in list view
+            function displayItems(items, category = 'all') {
+                itemsContainer.innerHTML = '';
+                
+                let filteredItems = Object.values(items);
+                
+                // Filter by category if not 'all'
+                if (category !== 'all') {
+                    filteredItems = filteredItems.filter(item => item.category === category);
+                }
+                
+                // Filter by search term if any
+                const searchTerm = searchItemsInput.value.toLowerCase();
+                if (searchTerm) {
+                    filteredItems = filteredItems.filter(item => 
+                        item.code.toLowerCase().includes(searchTerm) || 
+                        item.name.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                if (filteredItems.length === 0) {
+                    itemsContainer.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <i>🔍</i>
+                            <h3>No items found</h3>
+                            <p>Try a different search or category</p>
                         </div>
                     `;
                     return;
                 }
                 
-                editItemsList.innerHTML = '';
-                
-                Object.values(items).forEach(item => {
+                filteredItems.forEach(item => {
                     const itemRow = document.createElement('div');
                     itemRow.className = 'item-row';
                     itemRow.innerHTML = `
@@ -1345,26 +1263,22 @@
                             <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
                         </div>
                         <div class="item-actions">
-                            <button class="btn btn-primary btn-sm edit-item" data-code="${item.code}">Edit</button>
-                            <button class="btn btn-danger btn-sm delete-item" data-code="${item.code}">Delete</button>
+                            <input type="number" class="quantity-input" value="1" min="1">
+                            <button class="btn btn-primary btn-sm add-to-po" data-code="${item.code}">Add to PO</button>
                         </div>
                     `;
-                    editItemsList.appendChild(itemRow);
+                    itemsContainer.appendChild(itemRow);
                 });
                 
-                // Add event listeners to edit buttons
-                document.querySelectorAll('.edit-item').forEach(button => {
+                // Add event listeners to "Add to PO" buttons
+                document.querySelectorAll('.add-to-po').forEach(button => {
                     button.addEventListener('click', function() {
                         const code = this.getAttribute('data-code');
-                        editItem(code);
-                    });
-                });
-                
-                // Add event listeners to delete buttons
-                document.querySelectorAll('.delete-item').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const code = this.getAttribute('data-code');
-                        deleteItem(code);
+                        const item = filteredItems.find(i => i.code === code);
+                        const quantity = parseInt(this.parentElement.querySelector('.quantity-input').value) || 1;
+                        
+                        addToPO(item, quantity);
+                        showNotification('Item added to PO');
                     });
                 });
 
@@ -1375,440 +1289,760 @@
                         modalImg.src = this.src;
                     });
                 });
-            }).catch(error => {
-                console.error('Error loading items for editing:', error);
-                showNotification('Error loading items', true);
-            });
-        }
+            }
 
-        // Edit item
-        function editItem(code) {
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
-                const item = Object.values(items).find(i => i.code === code);
+            // Load stock items
+            function loadStockItems(category = 'all') {
+                stockItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading stock items...</p></div>';
                 
-                if (!item) {
-                    showNotification('Item not found', true);
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || [];
+                    allItems = items; // Store all items for stock management
+                    displayStockItems(items, category);
+                }).catch(error => {
+                    console.error('Error loading stock items:', error);
+                    showNotification('Error loading stock items', true);
+                });
+            }
+
+            // Display stock items
+            function displayStockItems(items, category = 'all') {
+                stockItemsList.innerHTML = '';
+                
+                let filteredItems = Object.values(items);
+                
+                // Filter by search term if any
+                const searchTerm = searchStockInput.value.toLowerCase();
+                if (searchTerm) {
+                    filteredItems = filteredItems.filter(item => 
+                        item.code.toLowerCase().includes(searchTerm) || 
+                        item.name.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                // Filter by stock status
+                if (category === 'low') {
+                    filteredItems = filteredItems.filter(item => 
+                        item.stock !== undefined && item.stock > 0 && item.stock <= LOW_STOCK_THRESHOLD
+                    );
+                } else if (category === 'out') {
+                    filteredItems = filteredItems.filter(item => 
+                        item.stock !== undefined && item.stock <= 0
+                    );
+                }
+                
+                if (filteredItems.length === 0) {
+                    stockItemsList.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <i>📦</i>
+                            <h3>No items found</h3>
+                            <p>${category === 'all' ? 'No items in inventory' : 
+                               category === 'low' ? 'No low stock items' : 'No out of stock items'}</p>
+                        </div>
+                    `;
                     return;
                 }
                 
-                currentEditItem = item;
+                // Sort by stock level (lowest first)
+                filteredItems.sort((a, b) => {
+                    const stockA = a.stock !== undefined ? a.stock : Infinity;
+                    const stockB = b.stock !== undefined ? b.stock : Infinity;
+                    return stockA - stockB;
+                });
                 
-                // Fill the form
-                document.getElementById('itemCode').value = item.code;
-                document.getElementById('itemName').value = item.name;
-                document.getElementById('itemCategory').value = item.category;
-                document.getElementById('itemPrice').value = item.price || '';
-                document.getElementById('itemStock').value = item.stock !== undefined ? item.stock : '';
+                filteredItems.forEach(item => {
+                    const stockItemRow = document.createElement('div');
+                    stockItemRow.className = 'stock-item-row';
+                    
+                    // Determine stock status color
+                    let stockStatus = 'N/A';
+                    let stockColor = '#7f8c8d';
+                    
+                    if (item.stock !== undefined) {
+                        if (item.stock <= 0) {
+                            stockStatus = 'Out of Stock';
+                            stockColor = '#e74c3c';
+                        } else if (item.stock <= LOW_STOCK_THRESHOLD) {
+                            stockStatus = `Low Stock (${item.stock})`;
+                            stockColor = '#f39c12';
+                        } else {
+                            stockStatus = `In Stock (${item.stock})`;
+                            stockColor = '#27ae60';
+                        }
+                    }
+                    
+                    stockItemRow.innerHTML = `
+                        <div class="stock-item-image">
+                            <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
+                        </div>
+                        <div class="stock-item-details">
+                            <div class="stock-item-code">${item.code}</div>
+                            <div class="stock-item-name">${item.name}</div>
+                            <div class="stock-item-stock" style="color: ${stockColor}">${stockStatus}</div>
+                        </div>
+                        <div class="stock-item-actions">
+                            <input type="number" class="stock-input" value="${item.stock !== undefined ? item.stock : ''}" placeholder="Stock" min="0">
+                            <button class="btn btn-primary btn-sm update-stock" data-code="${item.code}">Update</button>
+                        </div>
+                    `;
+                    stockItemsList.appendChild(stockItemRow);
+                });
                 
-                // Show image preview if exists
-                if (item.image) {
-                    imagePreview.src = item.image;
+                // Add event listeners to update stock buttons
+                document.querySelectorAll('.update-stock').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const code = this.getAttribute('data-code');
+                        const stockInput = this.parentElement.querySelector('.stock-input');
+                        const newStock = parseInt(stockInput.value) || 0;
+                        
+                        updateStock(code, newStock);
+                    });
+                });
+
+                // Add click event to item images for preview
+                document.querySelectorAll('.stock-item-image img').forEach(img => {
+                    img.addEventListener('click', function() {
+                        modal.style.display = "block";
+                        modalImg.src = this.src;
+                    });
+                });
+            }
+
+            // Update stock for an item
+            function updateStock(code, newStock) {
+                // Find the item key in Firebase
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || {};
+                    let itemKey = null;
+                    
+                    for (const key in items) {
+                        if (items[key].code === code) {
+                            itemKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (!itemKey) {
+                        showNotification('Item not found', true);
+                        return;
+                    }
+                    
+                    // Update the stock
+                    itemsRef.child(itemKey).update({ stock: newStock })
+                        .then(() => {
+                            showNotification('Stock updated successfully');
+                            
+                            // Reload stock items
+                            const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+                            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                            loadStockItems(category);
+                            
+                            // Update the item in allItems
+                            allItems[itemKey].stock = newStock;
+                        })
+                        .catch(error => {
+                            console.error('Error updating stock:', error);
+                            showNotification('Error updating stock', true);
+                        });
+                });
+            }
+
+            // Load items for editing
+            function loadItemsForEditing() {
+                editItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
+                
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || [];
+                    
+                    if (Object.keys(items).length === 0) {
+                        editItemsList.innerHTML = `
+                            <div class="empty-state">
+                                <i>📦</i>
+                                <h3>No items in inventory</h3>
+                                <p>Add your first item using the form above</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    editItemsList.innerHTML = '';
+                    
+                    Object.values(items).forEach(item => {
+                        const itemRow = document.createElement('div');
+                        itemRow.className = 'item-row';
+                        itemRow.innerHTML = `
+                            <div class="item-image">
+                                <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
+                            </div>
+                            <div class="item-details">
+                                <div class="item-code">${item.code}</div>
+                                <div class="item-name">${item.name}</div>
+                                <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
+                                <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-primary btn-sm edit-item" data-code="${item.code}">Edit</button>
+                                <button class="btn btn-danger btn-sm delete-item" data-code="${item.code}">Delete</button>
+                            </div>
+                        `;
+                        editItemsList.appendChild(itemRow);
+                    });
+                    
+                    // Add event listeners to edit buttons
+                    document.querySelectorAll('.edit-item').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const code = this.getAttribute('data-code');
+                            editItem(code);
+                        });
+                    });
+                    
+                    // Add event listeners to delete buttons
+                    document.querySelectorAll('.delete-item').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const code = this.getAttribute('data-code');
+                            deleteItem(code);
+                        });
+                    });
+
+                    // Add click event to item images for preview
+                    document.querySelectorAll('.item-image img').forEach(img => {
+                        img.addEventListener('click', function() {
+                            modal.style.display = "block";
+                            modalImg.src = this.src;
+                        });
+                    });
+                }).catch(error => {
+                    console.error('Error loading items for editing:', error);
+                    showNotification('Error loading items', true);
+                });
+            }
+
+            // Edit item
+            function editItem(code) {
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || [];
+                    const item = Object.values(items).find(i => i.code === code);
+                    
+                    if (!item) {
+                        showNotification('Item not found', true);
+                        return;
+                    }
+                    
+                    currentEditItem = item;
+                    
+                    // Fill the form
+                    document.getElementById('itemCode').value = item.code;
+                    document.getElementById('itemName').value = item.name;
+                    document.getElementById('itemCategory').value = item.category;
+                    document.getElementById('itemPrice').value = item.price || '';
+                    document.getElementById('itemStock').value = item.stock !== undefined ? item.stock : '';
+                    
+                    // Show image preview if exists
+                    if (item.image) {
+                        imagePreview.src = item.image;
+                        imagePreview.style.display = 'block';
+                        imagePlaceholder.style.display = 'none';
+                    } else {
+                        imagePreview.style.display = 'none';
+                        imagePlaceholder.style.display = 'block';
+                    }
+                    
+                    // Change form title and buttons
+                    formTitle.textContent = 'Edit Item';
+                    deleteBtn.style.display = 'inline-block';
+                    cancelEditBtn.style.display = 'inline-block';
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }).catch(error => {
+                    console.error('Error loading item for editing:', error);
+                    showNotification('Error loading item', true);
+                });
+            }
+
+            // Delete item
+            function deleteItem(code) {
+                if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) {
+                    return;
+                }
+                
+                // Find the item key in Firebase
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || {};
+                    let itemKey = null;
+                    
+                    for (const key in items) {
+                        if (items[key].code === code) {
+                            itemKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (!itemKey) {
+                        showNotification('Item not found', true);
+                        return;
+                    }
+                    
+                    // Remove from items
+                    itemsRef.child(itemKey).remove()
+                        .then(() => {
+                            // Remove from current PO if exists
+                            poRef.once('value').then(poSnapshot => {
+                                const poItems = poSnapshot.val() || {};
+                                let poItemKey = null;
+                                
+                                for (const key in poItems) {
+                                    if (poItems[key].code === code) {
+                                        poItemKey = key;
+                                        break;
+                                    }
+                                }
+                                
+                                if (poItemKey) {
+                                    poRef.child(poItemKey).remove();
+                                }
+                                
+                                loadItemsForEditing();
+                                loadStockItems();
+                                
+                                if (currentEditItem && currentEditItem.code === code) {
+                                    resetForm();
+                                }
+                                
+                                showNotification('Item deleted successfully');
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error deleting item:', error);
+                            showNotification('Error deleting item', true);
+                        });
+                });
+            }
+
+            // Cancel edit
+            cancelEditBtn.addEventListener('click', resetForm);
+
+            // Reset form to add new item state
+            function resetForm() {
+                document.getElementById('itemCode').value = '';
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemCategory').value = 'fiberglass';
+                document.getElementById('itemPrice').value = '';
+                document.getElementById('itemStock').value = '';
+                
+                imagePreview.src = '';
+                imagePreview.style.display = 'none';
+                imagePlaceholder.style.display = 'block';
+                currentImageFile = null;
+                
+                formTitle.textContent = 'Add New Item';
+                deleteBtn.style.display = 'none';
+                cancelEditBtn.style.display = 'none';
+                
+                currentEditItem = null;
+            }
+
+            // Image upload handling
+            imageUpload.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.match('image.*')) {
+                    showNotification('Please select an image file', true);
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
                     imagePreview.style.display = 'block';
                     imagePlaceholder.style.display = 'none';
-                } else {
-                    imagePreview.style.display = 'none';
-                    imagePlaceholder.style.display = 'block';
-                }
-                
-                // Change form title and buttons
-                formTitle.textContent = 'Edit Item';
-                deleteBtn.style.display = 'inline-block';
-                cancelEditBtn.style.display = 'inline-block';
-                
-                // Scroll to top
-                window.scrollTo(0, 0);
-            }).catch(error => {
-                console.error('Error loading item for editing:', error);
-                showNotification('Error loading item', true);
+                    currentImageFile = file;
+                };
+                reader.readAsDataURL(file);
             });
-        }
 
-        // Delete item
-        function deleteItem(code) {
-            if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) {
-                return;
-            }
-            
-            // Find the item key in Firebase
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || {};
-                let itemKey = null;
+            // Drag and drop for image
+            imageUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                imageUpload.style.borderColor = 'var(--secondary-color)';
+            });
+
+            imageUpload.addEventListener('dragleave', () => {
+                imageUpload.style.borderColor = '#ddd';
+            });
+
+            imageUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                imageUpload.style.borderColor = '#ddd';
                 
-                for (const key in items) {
-                    if (items[key].code === code) {
-                        itemKey = key;
-                        break;
-                    }
-                }
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
                 
-                if (!itemKey) {
-                    showNotification('Item not found', true);
+                if (!file.type.match('image.*')) {
+                    showNotification('Please drop an image file', true);
                     return;
                 }
                 
-                // Remove from items
-                itemsRef.child(itemKey).remove()
-                    .then(() => {
-                        // Remove from current PO if exists
-                        poRef.once('value').then(poSnapshot => {
-                            const poItems = poSnapshot.val() || {};
-                            let poItemKey = null;
-                            
-                            for (const key in poItems) {
-                                if (poItems[key].code === code) {
-                                    poItemKey = key;
-                                    break;
-                                }
-                            }
-                            
-                            if (poItemKey) {
-                                poRef.child(poItemKey).remove();
-                            }
-                            
-                            loadItemsForEditing();
-                            loadStockItems();
-                            
-                            if (currentEditItem && currentEditItem.code === code) {
-                                resetForm();
-                            }
-                            
-                            showNotification('Item deleted successfully');
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error deleting item:', error);
-                        showNotification('Error deleting item', true);
-                    });
+                fileInput.files = e.dataTransfer.files;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                    imagePlaceholder.style.display = 'none';
+                    currentImageFile = file;
+                };
+                reader.readAsDataURL(file);
             });
-        }
 
-        // Cancel edit
-        cancelEditBtn.addEventListener('click', resetForm);
-
-        // Reset form to add new item state
-        function resetForm() {
-            document.getElementById('itemCode').value = '';
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemCategory').value = 'fiberglass';
-            document.getElementById('itemPrice').value = '';
-            document.getElementById('itemStock').value = '';
-            
-            imagePreview.src = '';
-            imagePreview.style.display = 'none';
-            imagePlaceholder.style.display = 'block';
-            currentImageFile = null;
-            
-            formTitle.textContent = 'Add New Item';
-            deleteBtn.style.display = 'none';
-            cancelEditBtn.style.display = 'none';
-            
-            currentEditItem = null;
-        }
-
-        // Image upload handling
-        imageUpload.addEventListener('click', () => fileInput.click());
-        
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            if (!file.type.match('image.*')) {
-                showNotification('Please select an image file', true);
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                imagePreview.src = event.target.result;
-                imagePreview.style.display = 'block';
-                imagePlaceholder.style.display = 'none';
-                currentImageFile = file;
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Drag and drop for image
-        imageUpload.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            imageUpload.style.borderColor = 'var(--secondary-color)';
-        });
-
-        imageUpload.addEventListener('dragleave', () => {
-            imageUpload.style.borderColor = '#ddd';
-        });
-
-        imageUpload.addEventListener('drop', (e) => {
-            e.preventDefault();
-            imageUpload.style.borderColor = '#ddd';
-            
-            const file = e.dataTransfer.files[0];
-            if (!file) return;
-            
-            if (!file.type.match('image.*')) {
-                showNotification('Please drop an image file', true);
-                return;
-            }
-            
-            fileInput.files = e.dataTransfer.files;
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                imagePreview.src = event.target.result;
-                imagePreview.style.display = 'block';
-                imagePlaceholder.style.display = 'none';
-                currentImageFile = file;
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Add item to PO
-        function addToPO(item, quantity = 1) {
-            poRef.once('value').then(snapshot => {
-                const poItems = snapshot.val() || {};
-                let existingItemKey = null;
-                
-                // Check if item already exists in PO
-                for (const key in poItems) {
-                    if (poItems[key].code === item.code) {
-                        existingItemKey = key;
-                        break;
-                    }
-                }
-                
-                if (existingItemKey) {
-                    // Update quantity of existing item
-                    const newQuantity = poItems[existingItemKey].quantity + quantity;
-                    poRef.child(existingItemKey).update({ quantity: newQuantity })
-                        .then(() => {
-                            showNotification('Item quantity updated in PO');
-                            updatePOView();
-                        })
-                        .catch(error => {
-                            console.error('Error updating PO item:', error);
-                            showNotification('Error updating PO', true);
-                        });
-                } else {
-                    // Add new item to PO
-                    const newItem = {
-                        ...item,
-                        quantity: quantity
-                    };
-                    
-                    poRef.push(newItem)
-                        .then(() => {
-                            showNotification('Item added to PO');
-                            updatePOView();
-                        })
-                        .catch(error => {
-                            console.error('Error adding to PO:', error);
-                            showNotification('Error adding to PO', true);
-                        });
-                }
-            });
-        }
-
-        // Load PO from Firebase
-        function loadPO() {
-            poItemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading purchase order...</p></div>';
-            
-            poRef.on('value', snapshot => {
-                currentPOItems = snapshot.val() || [];
-                updatePOView(currentPOItems);
-            }, error => {
-                console.error('Error loading PO:', error);
-                showNotification('Error loading purchase order', true);
-            });
-        }
-
-        // Update PO view
-        function updatePOView(poItems = null) {
-            if (!poItems) {
-                // If poItems not provided, get from Firebase
+            // Add item to PO
+            function addToPO(item, quantity = 1) {
                 poRef.once('value').then(snapshot => {
+                    const poItems = snapshot.val() || {};
+                    let existingItemKey = null;
+                    
+                    // Check if item already exists in PO
+                    for (const key in poItems) {
+                        if (poItems[key].code === item.code) {
+                            existingItemKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (existingItemKey) {
+                        // Update quantity of existing item
+                        const newQuantity = poItems[existingItemKey].quantity + quantity;
+                        poRef.child(existingItemKey).update({ quantity: newQuantity })
+                            .then(() => {
+                                showNotification('Item quantity updated in PO');
+                                updatePOView();
+                            })
+                            .catch(error => {
+                                console.error('Error updating PO item:', error);
+                                showNotification('Error updating PO', true);
+                            });
+                    } else {
+                        // Add new item to PO
+                        const newItem = {
+                            ...item,
+                            quantity: quantity
+                        };
+                        
+                        poRef.push(newItem)
+                            .then(() => {
+                                showNotification('Item added to PO');
+                                updatePOView();
+                            })
+                            .catch(error => {
+                                console.error('Error adding to PO:', error);
+                                showNotification('Error adding to PO', true);
+                            });
+                    }
+                });
+            }
+
+            // Load PO from Firebase
+            function loadPO() {
+                poItemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading purchase order...</p></div>';
+                
+                poRef.on('value', snapshot => {
                     currentPOItems = snapshot.val() || [];
                     updatePOView(currentPOItems);
+                }, error => {
+                    console.error('Error loading PO:', error);
+                    showNotification('Error loading purchase order', true);
                 });
-                return;
             }
-            
-            if (Object.keys(poItems).length === 0) {
-                poItemsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i>📦</i>
-                        <h3>Your PO is empty</h3>
-                        <p>Add items from the Browse tab to create a purchase order</p>
-                    </div>
-                `;
-                poSummary.style.display = 'none';
-                exportOptions.classList.remove('active');
-                return;
-            }
-            
-            poItemsContainer.innerHTML = '';
-            poSummary.style.display = 'block';
-            exportOptions.classList.add('active');
-            
-            let totalItems = 0;
-            let totalAmount = 0;
-            
-            Object.values(poItems).forEach((item, index) => {
-                totalItems += item.quantity;
-                totalAmount += (item.price || 0) * item.quantity;
-                
-                const poItem = document.createElement('div');
-                poItem.className = 'po-item';
-                poItem.innerHTML = `
-                    <div class="po-item-details">
-                        <div class="po-item-name">${item.name}</div>
-                        <div class="po-item-code">${item.code} | ${CURRENCY} ${item.price?.toFixed(2) || '0.00'} each</div>
-                    </div>
-                    <div>
-                        <input type="number" class="po-qty-input" value="${item.quantity}" min="1" data-key="${Object.keys(poItems)[index]}">
-                    </div>
-                    <div style="font-weight: 600; color: var(--secondary-color);">
-                        ${CURRENCY} ${((item.price || 0) * item.quantity).toFixed(2)}
-                    </div>
-                    <button class="btn btn-danger remove-from-po" data-code="${item.code}">×</button>
-                `;
-                poItemsContainer.appendChild(poItem);
-            });
-            
-            // Update summary
-            document.getElementById('totalItems').textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
-            document.getElementById('totalAmount').textContent = `${CURRENCY} ${totalAmount.toFixed(2)}`;
-            
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.remove-from-po').forEach(button => {
-                button.addEventListener('click', function() {
-                    const code = this.getAttribute('data-code');
-                    removeFromPO(code);
-                });
-            });
 
-            // Add event listeners to quantity inputs
-            document.querySelectorAll('.po-qty-input').forEach(input => {
-                input.addEventListener('change', function() {
-                    const newQty = parseInt(this.value) || 1;
-                    const itemKey = this.getAttribute('data-key');
+            // Update PO view
+            function updatePOView(poItems = null) {
+                if (!poItems) {
+                    // If poItems not provided, get from Firebase
+                    poRef.once('value').then(snapshot => {
+                        currentPOItems = snapshot.val() || [];
+                        updatePOView(currentPOItems);
+                    });
+                    return;
+                }
+                
+                if (Object.keys(poItems).length === 0) {
+                    poItemsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i>📦</i>
+                            <h3>Your PO is empty</h3>
+                            <p>Add items from the Browse tab to create a purchase order</p>
+                        </div>
+                    `;
+                    poSummary.style.display = 'none';
+                    exportOptions.classList.remove('active');
+                    return;
+                }
+                
+                poItemsContainer.innerHTML = '';
+                poSummary.style.display = 'block';
+                exportOptions.classList.add('active');
+                
+                let totalItems = 0;
+                let totalAmount = 0;
+                
+                Object.values(poItems).forEach((item, index) => {
+                    totalItems += item.quantity;
+                    totalAmount += (item.price || 0) * item.quantity;
                     
-                    poRef.child(itemKey).update({ quantity: newQty })
-                        .then(() => {
-                            showNotification('Quantity updated');
-                        })
-                        .catch(error => {
-                            console.error('Error updating quantity:', error);
-                            showNotification('Error updating quantity', true);
-                        });
+                    const poItem = document.createElement('div');
+                    poItem.className = 'po-item';
+                    poItem.innerHTML = `
+                        <div class="po-item-details">
+                            <div class="po-item-name">${item.name}</div>
+                            <div class="po-item-code">${item.code} | ${CURRENCY} ${item.price?.toFixed(2) || '0.00'} each</div>
+                        </div>
+                        <div>
+                            <input type="number" class="po-qty-input" value="${item.quantity}" min="1" data-key="${Object.keys(poItems)[index]}">
+                        </div>
+                        <div style="font-weight: 600; color: var(--secondary-color);">
+                            ${CURRENCY} ${((item.price || 0) * item.quantity).toFixed(2)}
+                        </div>
+                        <button class="btn btn-danger remove-from-po" data-code="${item.code}">×</button>
+                    `;
+                    poItemsContainer.appendChild(poItem);
+                });
+                
+                // Update summary
+                document.getElementById('totalItems').textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+                document.getElementById('totalAmount').textContent = `${CURRENCY} ${totalAmount.toFixed(2)}`;
+                
+                // Add event listeners to remove buttons
+                document.querySelectorAll('.remove-from-po').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const code = this.getAttribute('data-code');
+                        removeFromPO(code);
+                    });
+                });
+
+                // Add event listeners to quantity inputs
+                document.querySelectorAll('.po-qty-input').forEach(input => {
+                    input.addEventListener('change', function() {
+                        const newQty = parseInt(this.value) || 1;
+                        const itemKey = this.getAttribute('data-key');
+                        
+                        poRef.child(itemKey).update({ quantity: newQty })
+                            .then(() => {
+                                showNotification('Quantity updated');
+                            })
+                            .catch(error => {
+                                console.error('Error updating quantity:', error);
+                                showNotification('Error updating quantity', true);
+                            });
+                    });
+                });
+            }
+
+            // Remove item from PO
+            function removeFromPO(code) {
+                poRef.once('value').then(snapshot => {
+                    const poItems = snapshot.val() || {};
+                    let itemKey = null;
+                    
+                    for (const key in poItems) {
+                        if (poItems[key].code === code) {
+                            itemKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (itemKey) {
+                        poRef.child(itemKey).remove()
+                            .then(() => {
+                                showNotification('Item removed from PO');
+                            })
+                            .catch(error => {
+                                console.error('Error removing from PO:', error);
+                                showNotification('Error removing item', true);
+                            });
+                    }
+                });
+            }
+
+            // Clear PO
+            document.getElementById('clearPO').addEventListener('click', function() {
+                poRef.once('value').then(snapshot => {
+                    if (!snapshot.val() || Object.keys(snapshot.val()).length === 0) {
+                        showNotification('PO is already empty', true);
+                        return;
+                    }
+                    
+                    if (confirm('Are you sure you want to clear the entire PO?')) {
+                        poRef.remove()
+                            .then(() => {
+                                showNotification('PO cleared successfully');
+                            })
+                            .catch(error => {
+                                console.error('Error clearing PO:', error);
+                                showNotification('Error clearing PO', true);
+                            });
+                    }
                 });
             });
-        }
 
-        // Remove item from PO
-        function removeFromPO(code) {
-            poRef.once('value').then(snapshot => {
-                const poItems = snapshot.val() || {};
-                let itemKey = null;
-                
-                for (const key in poItems) {
-                    if (poItems[key].code === code) {
-                        itemKey = key;
-                        break;
+            // Print PO
+            document.getElementById('printPO').addEventListener('click', function() {
+                poRef.once('value').then(snapshot => {
+                    const poItems = snapshot.val() || [];
+                    
+                    if (Object.keys(poItems).length === 0) {
+                        showNotification('PO is empty. Add items first.', true);
+                        return;
                     }
-                }
-                
-                if (itemKey) {
-                    poRef.child(itemKey).remove()
-                        .then(() => {
-                            showNotification('Item removed from PO');
-                        })
-                        .catch(error => {
-                            console.error('Error removing from PO:', error);
-                            showNotification('Error removing item', true);
-                        });
-                }
+                    
+                    // Create printable content
+                    const printContent = generatePOContent(poItems);
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Purchase Order</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; margin: 20px; }
+                                h1 { color: #2c3e50; text-align: center; }
+                                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                                th { background-color: #f2f2f2; }
+                                .total { font-weight: bold; text-align: right; }
+                                .header { margin-bottom: 30px; }
+                                .footer { margin-top: 30px; text-align: right; }
+                                .checkbox { width: 20px; height: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                                <h1>PURCHASE ORDER</h1>
+                                <p>Date: ${new Date().toLocaleDateString()}</p>
+                            </div>
+                            ${printContent}
+                            <div class="footer">
+                                <p>_________________________</p>
+                                <p>Authorized Signature</p>
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 500);
+                });
             });
-        }
 
-        // Clear PO
-        document.getElementById('clearPO').addEventListener('click', function() {
-            poRef.once('value').then(snapshot => {
-                if (!snapshot.val() || Object.keys(snapshot.val()).length === 0) {
-                    showNotification('PO is already empty', true);
-                    return;
-                }
-                
-                if (confirm('Are you sure you want to clear the entire PO?')) {
-                    poRef.remove()
-                        .then(() => {
-                            showNotification('PO cleared successfully');
-                        })
-                        .catch(error => {
-                            console.error('Error clearing PO:', error);
-                            showNotification('Error clearing PO', true);
-                        });
-                }
+            // Export as PDF
+            exportPDFBtn.addEventListener('click', function() {
+                poRef.once('value').then(snapshot => {
+                    const poItems = snapshot.val() || [];
+                    
+                    if (Object.keys(poItems).length === 0) {
+                        showNotification('PO is empty. Add items first.', true);
+                        return;
+                    }
+                    
+                    // Create a new jsPDF instance
+                    const doc = new jsPDF();
+                    
+                    // Add title
+                    doc.setFontSize(18);
+                    doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
+                    
+                    // Add date
+                    doc.setFontSize(12);
+                    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
+                    
+                    // Create table data
+                    const tableData = [];
+                    let totalAmount = 0;
+                    
+                    Object.values(poItems).forEach(item => {
+                        const itemTotal = (item.price || 0) * item.quantity;
+                        totalAmount += itemTotal;
+                        
+                        tableData.push([
+                            { content: '', styles: { cellWidth: 10 } },
+                            item.code,
+                            item.name,
+                            { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
+                            { content: item.quantity.toString(), styles: { halign: 'center' } },
+                            { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
+                        ]);
+                    });
+                    
+                    // Add total row
+                    tableData.push([
+                        { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+                        { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
+                    ]);
+                    
+                    // AutoTable options
+                    const options = {
+                        startY: 30,
+                        head: [
+                            [
+                                { content: '✔', styles: { cellWidth: 10 } },
+                                'Code',
+                                'Description',
+                                { content: 'Unit Price', styles: { halign: 'right' } },
+                                { content: 'Qty', styles: { halign: 'center' } },
+                                { content: 'Total', styles: { halign: 'right' } }
+                            ]
+                        ],
+                        body: tableData,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [44, 62, 80], // Dark blue color
+                            textColor: 255, // White text
+                            fontStyle: 'bold'
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 10 }, // Checkbox column
+                            1: { cellWidth: 30 }, // Code column
+                            2: { cellWidth: 'auto' }, // Description column
+                            3: { cellWidth: 30 }, // Unit price column
+                            4: { cellWidth: 20 }, // Qty column
+                            5: { cellWidth: 30 } // Total column
+                        },
+                        didDrawCell: function(data) {
+                            // Draw checkboxes in the first column (except header and total row)
+                            if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
+                                doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+                            }
+                        }
+                    };
+                    
+                    // Generate the table
+                    doc.autoTable(options);
+                    
+                    // Add signature line
+                    doc.setFontSize(12);
+                    doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
+                    doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
+                    
+                    // Save the PDF
+                    doc.save(`PurchaseOrder_${new Date().toISOString().slice(0,10)}.pdf`);
+                    showNotification('PO exported as PDF');
+                });
             });
-        });
 
-        // Print PO
-        document.getElementById('printPO').addEventListener('click', function() {
-            poRef.once('value').then(snapshot => {
-                const poItems = snapshot.val() || [];
+            // Generate Export based on selected options
+            generateExportBtn.addEventListener('click', function() {
+                const includeCode = document.getElementById('exportCode').checked;
+                const includeName = document.getElementById('exportName').checked;
+                const includeQty = document.getElementById('exportQty').checked;
+                const includePrice = document.getElementById('exportPrice').checked;
+                const includeTotal = document.getElementById('exportTotal').checked;
                 
-                if (Object.keys(poItems).length === 0) {
-                    showNotification('PO is empty. Add items first.', true);
-                    return;
-                }
-                
-                // Create printable content
-                const printContent = generatePOContent(poItems);
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Purchase Order</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 20px; }
-                            h1 { color: #2c3e50; text-align: center; }
-                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                            th { background-color: #f2f2f2; }
-                            .total { font-weight: bold; text-align: right; }
-                            .header { margin-bottom: 30px; }
-                            .footer { margin-top: 30px; text-align: right; }
-                            .checkbox { width: 20px; height: 20px; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="header">
-                            <h1>PURCHASE ORDER</h1>
-                            <p>Date: ${new Date().toLocaleDateString()}</p>
-                        </div>
-                        ${printContent}
-                        <div class="footer">
-                            <p>_________________________</p>
-                            <p>Authorized Signature</p>
-                        </div>
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.focus();
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 500);
-            });
-        });
-
-        // Export as PDF
-        exportPDFBtn.addEventListener('click', function() {
-            poRef.once('value').then(snapshot => {
-                const poItems = snapshot.val() || [];
-                
-                if (Object.keys(poItems).length === 0) {
-                    showNotification('PO is empty. Add items first.', true);
+                if (!includeCode && !includeName && !includeQty && !includePrice && !includeTotal) {
+                    showNotification('Please select at least one export option', true);
                     return;
                 }
                 
@@ -1827,39 +2061,56 @@
                 const tableData = [];
                 let totalAmount = 0;
                 
-                Object.values(poItems).forEach(item => {
+                Object.values(currentPOItems).forEach(item => {
                     const itemTotal = (item.price || 0) * item.quantity;
                     totalAmount += itemTotal;
                     
-                    tableData.push([
-                        { content: '', styles: { cellWidth: 10 } },
-                        item.code,
-                        item.name,
-                        { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
-                        { content: item.quantity.toString(), styles: { halign: 'center' } },
-                        { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
-                    ]);
+                    const rowData = [];
+                    
+                    // Add checkbox
+                    rowData.push({ content: '', styles: { cellWidth: 10 } });
+                    
+                    // Add selected columns
+                    if (includeCode) rowData.push(item.code);
+                    if (includeName) rowData.push(item.name);
+                    if (includePrice) rowData.push({ content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } });
+                    if (includeQty) rowData.push({ content: item.quantity.toString(), styles: { halign: 'center' } });
+                    if (includeTotal) rowData.push({ content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } });
+                    
+                    tableData.push(rowData);
                 });
                 
-                // Add total row
-                tableData.push([
-                    { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
-                    { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
-                ]);
+                // Add total row if total is included
+                if (includeTotal) {
+                    const totalRow = [];
+                    totalRow.push({ content: '', colSpan: 1, styles: { cellWidth: 10 } });
+                    
+                    // Calculate colspan based on selected columns
+                    let colspan = 0;
+                    if (includeCode) colspan++;
+                    if (includeName) colspan++;
+                    if (includePrice) colspan++;
+                    if (includeQty) colspan++;
+                    
+                    totalRow.push({ content: 'Total:', colSpan: colspan, styles: { halign: 'right', fontStyle: 'bold' } });
+                    totalRow.push({ content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } });
+                    
+                    tableData.push(totalRow);
+                }
+                
+                // Prepare headers
+                const headers = [];
+                headers.push({ content: '✔', styles: { cellWidth: 10 } });
+                if (includeCode) headers.push('Code');
+                if (includeName) headers.push('Description');
+                if (includePrice) headers.push({ content: 'Unit Price', styles: { halign: 'right' } });
+                if (includeQty) headers.push({ content: 'Qty', styles: { halign: 'center' } });
+                if (includeTotal) headers.push({ content: 'Total', styles: { halign: 'right' } });
                 
                 // AutoTable options
                 const options = {
                     startY: 30,
-                    head: [
-                        [
-                            { content: '✔', styles: { cellWidth: 10 } },
-                            'Code',
-                            'Description',
-                            { content: 'Unit Price', styles: { halign: 'right' } },
-                            { content: 'Qty', styles: { halign: 'center' } },
-                            { content: 'Total', styles: { halign: 'right' } }
-                        ]
-                    ],
+                    head: [headers],
                     body: tableData,
                     theme: 'grid',
                     headStyles: {
@@ -1867,17 +2118,10 @@
                         textColor: 255, // White text
                         fontStyle: 'bold'
                     },
-                    columnStyles: {
-                        0: { cellWidth: 10 }, // Checkbox column
-                        1: { cellWidth: 30 }, // Code column
-                        2: { cellWidth: 'auto' }, // Description column
-                        3: { cellWidth: 30 }, // Unit price column
-                        4: { cellWidth: 20 }, // Qty column
-                        5: { cellWidth: 30 } // Total column
-                    },
                     didDrawCell: function(data) {
                         // Draw checkboxes in the first column (except header and total row)
-                        if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
+                        if (data.column.index === 0 && data.row.index > 0 && 
+                            (includeTotal ? data.row.index < tableData.length - 1 : true)) {
                             doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
                         }
                     }
@@ -1892,256 +2136,166 @@
                 doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
                 
                 // Save the PDF
-                doc.save(`PurchaseOrder_${new Date().toISOString().slice(0,10)}.pdf`);
-                showNotification('PO exported as PDF');
+                const fileName = `PO_Export_${new Date().toISOString().slice(0,10)}.pdf`;
+                doc.save(fileName);
+                showNotification('Custom export generated');
+                
+                // Return the PDF data for sharing
+                return doc.output('datauristring');
             });
-        });
 
-        // Generate Export based on selected options
-        generateExportBtn.addEventListener('click', function() {
-            const includeCode = document.getElementById('exportCode').checked;
-            const includeName = document.getElementById('exportName').checked;
-            const includeQty = document.getElementById('exportQty').checked;
-            const includePrice = document.getElementById('exportPrice').checked;
-            const includeTotal = document.getElementById('exportTotal').checked;
-            
-            if (!includeCode && !includeName && !includeQty && !includePrice && !includeTotal) {
-                showNotification('Please select at least one export option', true);
-                return;
-            }
-            
-            // Create a new jsPDF instance
-            const doc = new jsPDF();
-            
-            // Add title
-            doc.setFontSize(18);
-            doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
-            
-            // Add date
-            doc.setFontSize(12);
-            doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
-            
-            // Create table data
-            const tableData = [];
-            let totalAmount = 0;
-            
-            Object.values(currentPOItems).forEach(item => {
-                const itemTotal = (item.price || 0) * item.quantity;
-                totalAmount += itemTotal;
-                
-                const rowData = [];
-                
-                // Add checkbox
-                rowData.push({ content: '', styles: { cellWidth: 10 } });
-                
-                // Add selected columns
-                if (includeCode) rowData.push(item.code);
-                if (includeName) rowData.push(item.name);
-                if (includePrice) rowData.push({ content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } });
-                if (includeQty) rowData.push({ content: item.quantity.toString(), styles: { halign: 'center' } });
-                if (includeTotal) rowData.push({ content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } });
-                
-                tableData.push(rowData);
-            });
-            
-            // Add total row if total is included
-            if (includeTotal) {
-                const totalRow = [];
-                totalRow.push({ content: '', colSpan: 1, styles: { cellWidth: 10 } });
-                
-                // Calculate colspan based on selected columns
-                let colspan = 0;
-                if (includeCode) colspan++;
-                if (includeName) colspan++;
-                if (includePrice) colspan++;
-                if (includeQty) colspan++;
-                
-                totalRow.push({ content: 'Total:', colSpan: colspan, styles: { halign: 'right', fontStyle: 'bold' } });
-                totalRow.push({ content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } });
-                
-                tableData.push(totalRow);
-            }
-            
-            // Prepare headers
-            const headers = [];
-            headers.push({ content: '✔', styles: { cellWidth: 10 } });
-            if (includeCode) headers.push('Code');
-            if (includeName) headers.push('Description');
-            if (includePrice) headers.push({ content: 'Unit Price', styles: { halign: 'right' } });
-            if (includeQty) headers.push({ content: 'Qty', styles: { halign: 'center' } });
-            if (includeTotal) headers.push({ content: 'Total', styles: { halign: 'right' } });
-            
-            // AutoTable options
-            const options = {
-                startY: 30,
-                head: [headers],
-                body: tableData,
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [44, 62, 80], // Dark blue color
-                    textColor: 255, // White text
-                    fontStyle: 'bold'
-                },
-                didDrawCell: function(data) {
-                    // Draw checkboxes in the first column (except header and total row)
-                    if (data.column.index === 0 && data.row.index > 0 && 
-                        (includeTotal ? data.row.index < tableData.length - 1 : true)) {
-                        doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+            // Share via Viber with PDF attachment
+            shareViberBtn.addEventListener('click', async function() {
+                poRef.once('value').then(async snapshot => {
+                    const poItems = snapshot.val() || [];
+                    
+                    if (Object.keys(poItems).length === 0) {
+                        showNotification('PO is empty. Add items first.', true);
+                        return;
                     }
-                }
-            };
-            
-            // Generate the table
-            doc.autoTable(options);
-            
-            // Add signature line
-            doc.setFontSize(12);
-            doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
-            doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
-            
-            // Save the PDF
-            const fileName = `PO_Export_${new Date().toISOString().slice(0,10)}.pdf`;
-            doc.save(fileName);
-            showNotification('Custom export generated');
-            
-            // Return the PDF data for sharing
-            return doc.output('datauristring');
-        });
+                    
+                    // First generate the PDF
+                    const doc = new jsPDF();
+                    
+                    // Add title
+                    doc.setFontSize(18);
+                    doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
+                    
+                    // Add date
+                    doc.setFontSize(12);
+                    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
+                    
+                    // Create table data
+                    const tableData = [];
+                    let totalAmount = 0;
+                    
+                    Object.values(poItems).forEach(item => {
+                        const itemTotal = (item.price || 0) * item.quantity;
+                        totalAmount += itemTotal;
+                        
+                        tableData.push([
+                            { content: '', styles: { cellWidth: 10 } },
+                            item.code,
+                            item.name,
+                            { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
+                            { content: item.quantity.toString(), styles: { halign: 'center' } },
+                            { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
+                        ]);
+                    });
+                    
+                    // Add total row
+                    tableData.push([
+                        { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+                        { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
+                    ]);
+                    
+                    // AutoTable options
+                    const options = {
+                        startY: 30,
+                        head: [
+                            [
+                                { content: '✔', styles: { cellWidth: 10 } },
+                                'Code',
+                                'Description',
+                                { content: 'Unit Price', styles: { halign: 'right' } },
+                                { content: 'Qty', styles: { halign: 'center' } },
+                                { content: 'Total', styles: { halign: 'right' } }
+                            ]
+                        ],
+                        body: tableData,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [44, 62, 80],
+                            textColor: 255,
+                            fontStyle: 'bold'
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 10 },
+                            1: { cellWidth: 30 },
+                            2: { cellWidth: 'auto' },
+                            3: { cellWidth: 30 },
+                            4: { cellWidth: 20 },
+                            5: { cellWidth: 30 }
+                        },
+                        didDrawCell: function(data) {
+                            if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
+                                doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+                            }
+                        }
+                    };
+                    
+                    // Generate the table
+                    doc.autoTable(options);
+                    
+                    // Add signature line
+                    doc.setFontSize(12);
+                    doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
+                    doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
+                    
+                    // Get PDF as base64
+                    const pdfBase64 = doc.output('datauristring');
+                    
+                    // Create PO text for sharing
+                    let poText = 'Purchase Order Request%0A%0A';
+                    poText += 'Items:%0A';
+                    
+                    Object.values(poItems).forEach(item => {
+                        const itemTotal = (item.price || 0) * item.quantity;
+                        poText += `- ${item.code} ${item.name} (Qty: ${item.quantity}) - ${CURRENCY} ${itemTotal.toFixed(2)}%0A`;
+                    });
+                    
+                    poText += `%0ATotal Amount: ${CURRENCY} ${totalAmount.toFixed(2)}%0A`;
+                    poText += 'Please see attached PDF for details.%0A';
+                    poText += 'Please process this order. Thank you!';
+                    
+                    // For Viber web, we can't directly share files, so we'll share the text with a download link
+                    // In a mobile app, you would use the Viber SDK to share the file
+                    const fileName = `PO_${new Date().toISOString().slice(0,10)}.pdf`;
+                    const downloadLink = `data:application/pdf;base64,${pdfBase64.split(',')[1]}`;
+                    
+                    // Open Viber share link with download instructions
+                    window.open(`viber://forward?text=${encodeURIComponent(poText + '%0A%0ADownload PO: ' + downloadLink)}`, '_blank');
+                    
+                    showNotification('PO shared via Viber with download link');
+                });
+            });
 
-        // Share via Viber with PDF attachment
-        shareViberBtn.addEventListener('click', async function() {
-            poRef.once('value').then(async snapshot => {
-                const poItems = snapshot.val() || [];
+            // Save item (add or update)
+            document.getElementById('saveItem').addEventListener('click', function() {
+                const code = document.getElementById('itemCode').value.trim();
+                const name = document.getElementById('itemName').value.trim();
+                const category = document.getElementById('itemCategory').value;
+                const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+                const stock = parseInt(document.getElementById('itemStock').value) || 0;
                 
-                if (Object.keys(poItems).length === 0) {
-                    showNotification('PO is empty. Add items first.', true);
+                if (!code || !name) {
+                    showNotification('Item code and name are required', true);
                     return;
                 }
                 
-                // First generate the PDF
-                const doc = new jsPDF();
-                
-                // Add title
-                doc.setFontSize(18);
-                doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
-                
-                // Add date
-                doc.setFontSize(12);
-                doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
-                
-                // Create table data
-                const tableData = [];
-                let totalAmount = 0;
-                
-                Object.values(poItems).forEach(item => {
-                    const itemTotal = (item.price || 0) * item.quantity;
-                    totalAmount += itemTotal;
-                    
-                    tableData.push([
-                        { content: '', styles: { cellWidth: 10 } },
-                        item.code,
-                        item.name,
-                        { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
-                        { content: item.quantity.toString(), styles: { halign: 'center' } },
-                        { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
-                    ]);
-                });
-                
-                // Add total row
-                tableData.push([
-                    { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
-                    { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
-                ]);
-                
-                // AutoTable options
-                const options = {
-                    startY: 30,
-                    head: [
-                        [
-                            { content: '✔', styles: { cellWidth: 10 } },
-                            'Code',
-                            'Description',
-                            { content: 'Unit Price', styles: { halign: 'right' } },
-                            { content: 'Qty', styles: { halign: 'center' } },
-                            { content: 'Total', styles: { halign: 'right' } }
-                        ]
-                    ],
-                    body: tableData,
-                    theme: 'grid',
-                    headStyles: {
-                        fillColor: [44, 62, 80],
-                        textColor: 255,
-                        fontStyle: 'bold'
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 10 },
-                        1: { cellWidth: 30 },
-                        2: { cellWidth: 'auto' },
-                        3: { cellWidth: 30 },
-                        4: { cellWidth: 20 },
-                        5: { cellWidth: 30 }
-                    },
-                    didDrawCell: function(data) {
-                        if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
-                            doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
-                        }
+                // Check if we're editing or adding new
+                if (currentEditItem) {
+                    // Editing existing item
+                    if (code !== currentEditItem.code) {
+                        // Check if new code already exists
+                        itemsRef.once('value').then(snapshot => {
+                            const items = snapshot.val() || {};
+                            const codeExists = Object.values(items).some(item => item.code === code);
+                            
+                            if (codeExists) {
+                                showNotification('Item with this code already exists', true);
+                                return;
+                            }
+                            
+                            // Proceed with update
+                            updateItemInFirebase(code, name, category, price, stock);
+                        });
+                    } else {
+                        // Code hasn't changed, proceed with update
+                        updateItemInFirebase(code, name, category, price, stock);
                     }
-                };
-                
-                // Generate the table
-                doc.autoTable(options);
-                
-                // Add signature line
-                doc.setFontSize(12);
-                doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
-                doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
-                
-                // Get PDF as base64
-                const pdfBase64 = doc.output('datauristring');
-                
-                // Create PO text for sharing
-                let poText = 'Purchase Order Request%0A%0A';
-                poText += 'Items:%0A';
-                
-                Object.values(poItems).forEach(item => {
-                    const itemTotal = (item.price || 0) * item.quantity;
-                    poText += `- ${item.code} ${item.name} (Qty: ${item.quantity}) - ${CURRENCY} ${itemTotal.toFixed(2)}%0A`;
-                });
-                
-                poText += `%0ATotal Amount: ${CURRENCY} ${totalAmount.toFixed(2)}%0A`;
-                poText += 'Please see attached PDF for details.%0A';
-                poText += 'Please process this order. Thank you!';
-                
-                // For Viber web, we can't directly share files, so we'll share the text with a download link
-                // In a mobile app, you would use the Viber SDK to share the file
-                const fileName = `PO_${new Date().toISOString().slice(0,10)}.pdf`;
-                const downloadLink = `data:application/pdf;base64,${pdfBase64.split(',')[1]}`;
-                
-                // Open Viber share link with download instructions
-                window.open(`viber://forward?text=${encodeURIComponent(poText + '%0A%0ADownload PO: ' + downloadLink)}`, '_blank');
-                
-                showNotification('PO shared via Viber with download link');
-            });
-        });
-
-        // Save item (add or update)
-        document.getElementById('saveItem').addEventListener('click', function() {
-            const code = document.getElementById('itemCode').value.trim();
-            const name = document.getElementById('itemName').value.trim();
-            const category = document.getElementById('itemCategory').value;
-            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
-            const stock = parseInt(document.getElementById('itemStock').value) || 0;
-            
-            if (!code || !name) {
-                showNotification('Item code and name are required', true);
-                return;
-            }
-            
-            // Check if we're editing or adding new
-            if (currentEditItem) {
-                // Editing existing item
-                if (code !== currentEditItem.code) {
-                    // Check if new code already exists
+                } else {
+                    // Adding new item - check if code exists
                     itemsRef.once('value').then(snapshot => {
                         const items = snapshot.val() || {};
                         const codeExists = Object.values(items).some(item => item.code === code);
@@ -2151,65 +2305,80 @@
                             return;
                         }
                         
-                        // Proceed with update
-                        updateItemInFirebase(code, name, category, price, stock);
+                        // Add new item
+                        addItemToFirebase(code, name, category, price, stock);
                     });
-                } else {
-                    // Code hasn't changed, proceed with update
-                    updateItemInFirebase(code, name, category, price, stock);
                 }
-            } else {
-                // Adding new item - check if code exists
+            });
+
+            // Update item in Firebase
+            function updateItemInFirebase(code, name, category, price, stock) {
+                // Find the item key in Firebase
                 itemsRef.once('value').then(snapshot => {
                     const items = snapshot.val() || {};
-                    const codeExists = Object.values(items).some(item => item.code === code);
+                    let itemKey = null;
                     
-                    if (codeExists) {
-                        showNotification('Item with this code already exists', true);
+                    for (const key in items) {
+                        if (items[key].code === currentEditItem.code) {
+                            itemKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (!itemKey) {
+                        showNotification('Item not found', true);
                         return;
                     }
                     
-                    // Add new item
-                    addItemToFirebase(code, name, category, price, stock);
-                });
-            }
-        });
-
-        // Update item in Firebase
-        function updateItemInFirebase(code, name, category, price, stock) {
-            // Find the item key in Firebase
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || {};
-                let itemKey = null;
-                
-                for (const key in items) {
-                    if (items[key].code === currentEditItem.code) {
-                        itemKey = key;
-                        break;
-                    }
-                }
-                
-                if (!itemKey) {
-                    showNotification('Item not found', true);
-                    return;
-                }
-                
-                // Prepare updated item data
-                const updatedItem = {
-                    code,
-                    name,
-                    category,
-                    price,
-                    stock
-                };
-                
-                // Update image if changed
-                if (currentImageFile) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        updatedItem.image = event.target.result;
-                        
-                        // Update the item in Firebase
+                    // Prepare updated item data
+                    const updatedItem = {
+                        code,
+                        name,
+                        category,
+                        price,
+                        stock
+                    };
+                    
+                    // Update image if changed
+                    if (currentImageFile) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            updatedItem.image = event.target.result;
+                            
+                            // Update the item in Firebase
+                            itemsRef.child(itemKey).update(updatedItem)
+                                .then(() => {
+                                    // Update PO if this item is there
+                                    poRef.once('value').then(poSnapshot => {
+                                        const poItems = poSnapshot.val() || {};
+                                        
+                                        for (const key in poItems) {
+                                            if (poItems[key].code === currentEditItem.code) {
+                                                poRef.child(key).update({
+                                                    code: code,
+                                                    name: name,
+                                                    category: category,
+                                                    price: price,
+                                                    stock: stock,
+                                                    image: updatedItem.image
+                                                });
+                                            }
+                                        }
+                                        
+                                        showNotification('Item updated successfully');
+                                        resetForm();
+                                        loadItemsForEditing();
+                                        loadStockItems();
+                                    });
+                                })
+                                .catch(error => {
+                                    console.error('Error updating item:', error);
+                                    showNotification('Error updating item', true);
+                                });
+                        };
+                        reader.readAsDataURL(currentImageFile);
+                    } else {
+                        // Update without changing image
                         itemsRef.child(itemKey).update(updatedItem)
                             .then(() => {
                                 // Update PO if this item is there
@@ -2223,8 +2392,7 @@
                                                 name: name,
                                                 category: category,
                                                 price: price,
-                                                stock: stock,
-                                                image: updatedItem.image
+                                                stock: stock
                                             });
                                         }
                                     }
@@ -2239,60 +2407,43 @@
                                 console.error('Error updating item:', error);
                                 showNotification('Error updating item', true);
                             });
-                    };
-                    reader.readAsDataURL(currentImageFile);
-                } else {
-                    // Update without changing image
-                    itemsRef.child(itemKey).update(updatedItem)
-                        .then(() => {
-                            // Update PO if this item is there
-                            poRef.once('value').then(poSnapshot => {
-                                const poItems = poSnapshot.val() || {};
-                                
-                                for (const key in poItems) {
-                                    if (poItems[key].code === currentEditItem.code) {
-                                        poRef.child(key).update({
-                                            code: code,
-                                            name: name,
-                                            category: category,
-                                            price: price,
-                                            stock: stock
-                                        });
-                                    }
-                                }
-                                
-                                showNotification('Item updated successfully');
+                    }
+                });
+            }
+
+            // Add new item to Firebase
+            function addItemToFirebase(code, name, category, price, stock) {
+                // Create new item
+                const newItem = {
+                    code,
+                    name,
+                    category,
+                    price,
+                    stock
+                };
+                
+                // Add image if provided
+                if (currentImageFile) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        newItem.image = event.target.result;
+                        
+                        // Add the item to Firebase
+                        itemsRef.push(newItem)
+                            .then(() => {
+                                showNotification('Item added successfully');
                                 resetForm();
                                 loadItemsForEditing();
                                 loadStockItems();
+                            })
+                            .catch(error => {
+                                console.error('Error adding item:', error);
+                                showNotification('Error adding item', true);
                             });
-                        })
-                        .catch(error => {
-                            console.error('Error updating item:', error);
-                            showNotification('Error updating item', true);
-                        });
-                }
-            });
-        }
-
-        // Add new item to Firebase
-        function addItemToFirebase(code, name, category, price, stock) {
-            // Create new item
-            const newItem = {
-                code,
-                name,
-                category,
-                price,
-                stock
-            };
-            
-            // Add image if provided
-            if (currentImageFile) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    newItem.image = event.target.result;
-                    
-                    // Add the item to Firebase
+                    };
+                    reader.readAsDataURL(currentImageFile);
+                } else {
+                    // Add without image
                     itemsRef.push(newItem)
                         .then(() => {
                             showNotification('Item added successfully');
@@ -2304,126 +2455,118 @@
                             console.error('Error adding item:', error);
                             showNotification('Error adding item', true);
                         });
-                };
-                reader.readAsDataURL(currentImageFile);
-            } else {
-                // Add without image
-                itemsRef.push(newItem)
-                    .then(() => {
-                        showNotification('Item added successfully');
-                        resetForm();
-                        loadItemsForEditing();
-                        loadStockItems();
-                    })
-                    .catch(error => {
-                        console.error('Error adding item:', error);
-                        showNotification('Error adding item', true);
-                    });
+                }
             }
-        }
 
-        // Delete item button
-        deleteBtn.addEventListener('click', function() {
-            if (currentEditItem) {
-                deleteItem(currentEditItem.code);
+            // Delete item button
+            deleteBtn.addEventListener('click', function() {
+                if (currentEditItem) {
+                    deleteItem(currentEditItem.code);
+                }
+            });
+
+            // Clear search
+            clearSearchBtn.addEventListener('click', function() {
+                searchItemsInput.value = '';
+                const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
+                const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                loadItems(category);
+            });
+
+            // Clear stock search
+            clearStockSearchBtn.addEventListener('click', function() {
+                searchStockInput.value = '';
+                const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+                const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                loadStockItems(category);
+            });
+
+            // Search functionality
+            searchItemsInput.addEventListener('input', function() {
+                const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
+                const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                loadItems(category);
+            });
+
+            // Stock search functionality
+            searchStockInput.addEventListener('input', function() {
+                const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+                const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                loadStockItems(category);
+            });
+
+            // Show notification
+            function showNotification(message, isError = false) {
+                notification.textContent = message;
+                notification.className = `notification ${isError ? 'error' : ''} show`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
             }
-        });
 
-        // Clear search
-        clearSearchBtn.addEventListener('click', function() {
-            searchItemsInput.value = '';
-            const activeCategoryTab = document.querySelector('.category-tabs .active');
-            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-            loadItems(category);
-        });
-
-        // Clear stock search
-        clearStockSearchBtn.addEventListener('click', function() {
-            searchStockInput.value = '';
-            const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
-            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-            loadStockItems(category);
-        });
-
-        // Search functionality
-        searchItemsInput.addEventListener('input', function() {
-            const activeCategoryTab = document.querySelector('.category-tabs .active');
-            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-            loadItems(category);
-        });
-
-        // Stock search functionality
-        searchStockInput.addEventListener('input', function() {
-            const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
-            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-            loadStockItems(category);
-        });
-
-        // Show notification
-        function showNotification(message, isError = false) {
-            notification.textContent = message;
-            notification.className = `notification ${isError ? 'error' : ''} show`;
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Generate PO content for printing/export
-        function generatePOContent(poItems) {
-            let content = '<table>';
-            content += `
-                <thead>
-                    <tr>
-                        <th style="width: 20px;">✔</th>
-                        <th>Item Code</th>
-                        <th>Description</th>
-                        <th>Unit Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-            `;
-            
-            let grandTotal = 0;
-            
-            Object.values(poItems).forEach(item => {
-                const total = (item.price || 0) * item.quantity;
-                grandTotal += total;
+            // Generate PO content for printing/export
+            function generatePOContent(poItems) {
+                let content = '<table>';
+                content += `
+                    <thead>
+                        <tr>
+                            <th style="width: 20px;">✔</th>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                let grandTotal = 0;
+                
+                Object.values(poItems).forEach(item => {
+                    const total = (item.price || 0) * item.quantity;
+                    grandTotal += total;
+                    
+                    content += `
+                        <tr>
+                            <td style="text-align: center;"><input type="checkbox" class="checkbox"></td>
+                            <td>${item.code}</td>
+                            <td>${item.name}</td>
+                            <td>${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</td>
+                            <td>${item.quantity}</td>
+                            <td>${CURRENCY} ${total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
                 
                 content += `
-                    <tr>
-                        <td style="text-align: center;"><input type="checkbox" class="checkbox"></td>
-                        <td>${item.code}</td>
-                        <td>${item.name}</td>
-                        <td>${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</td>
-                        <td>${item.quantity}</td>
-                        <td>${CURRENCY} ${total.toFixed(2)}</td>
-                    </tr>
+                        <tr>
+                            <td colspan="5" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                            <td style="font-weight: bold;">${CURRENCY} ${grandTotal.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
                 `;
-            });
-            
-            content += `
-                    <tr>
-                        <td colspan="5" style="text-align: right; font-weight: bold;">Grand Total:</td>
-                        <td style="font-weight: bold;">${CURRENCY} ${grandTotal.toFixed(2)}</td>
-                    </tr>
-                </tbody>
-            </table>
-            `;
-            
-            return content;
-        }
+                
+                return content;
+            }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load initial data
-            const activeCategoryTab = document.querySelector('.category-tabs .active');
+            // Initialize app after preloader
+            const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
             loadItems(category);
             loadPO();
-        });
+        }
+
+        // Start the animation when page loads
+        window.onload = function() {
+            animateLastHuntText();
+            
+            // Make the page full screen
+            document.documentElement.style.height = '100%';
+            document.body.style.height = '100%';
+        };
     </script>
 </body>
 </html>
