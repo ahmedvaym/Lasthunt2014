@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced PO Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PO Management System</title>
     <!-- Add Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
@@ -11,6 +11,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
         /* Preloader Animation */
         #preloader {
             position: fixed;
@@ -27,13 +49,14 @@
         }
         
         .last-hunt {
-            font-size: 4rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: #fff;
             text-transform: uppercase;
-            letter-spacing: 0.5rem;
+            letter-spacing: 0.3rem;
             position: relative;
             overflow: hidden;
+            text-align: center;
         }
         
         .last-hunt span {
@@ -51,7 +74,8 @@
         }
         
         .loading-bar {
-            width: 300px;
+            width: 80%;
+            max-width: 300px;
             height: 4px;
             background: rgba(255,255,255,0.2);
             margin-top: 20px;
@@ -71,587 +95,180 @@
             to { width: 100%; }
         }
         
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --border-radius: 6px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-
+        /* Main container */
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
+            width: 100%;
+            height: 100vh;
             display: none; /* Initially hidden until preloader finishes */
+            position: relative;
         }
-
+        
+        /* Header */
         header {
-            background-color: var(--primary-color);
+            background-color: #2c3e50;
             color: white;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
-        }
-
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-
-        .tabs {
-            display: flex;
-            background-color: var(--light-color);
-            border-bottom: 1px solid #ddd;
             position: sticky;
             top: 0;
             z-index: 100;
         }
-
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background-color: #ecf0f1;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 80px;
+            z-index: 100;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
         .tab {
-            padding: 15px 25px;
+            padding: 12px 15px;
             cursor: pointer;
             font-weight: 600;
-            color: var(--dark-color);
-            transition: var(--transition);
-            border-right: 1px solid #ddd;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-size: 0.9rem;
         }
-
-        .tab:hover {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-
+        
         .tab.active {
             background-color: white;
-            color: var(--secondary-color);
-            border-bottom: 3px solid var(--secondary-color);
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
         }
-
+        
+        /* Tab content */
         .tab-content {
             display: none;
-            padding: 25px;
-            animation: fadeIn 0.5s ease;
+            padding: 15px;
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        
         .tab-content.active {
             display: block;
         }
-
+        
+        /* Search container */
         .search-container {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             position: sticky;
-            top: 60px;
+            top: 130px;
             background: white;
-            padding: 10px 0;
+            padding: 8px 0;
             z-index: 90;
         }
-
+        
         .search-box {
             flex: 1;
-            padding: 12px 15px;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-
-        .search-box:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-
-        .category-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-            position: sticky;
-            top: 120px;
-            background: white;
-            padding: 10px 0;
-            z-index: 80;
-        }
-
-        .category-tab {
-            padding: 8px 16px;
-            background-color: var(--light-color);
-            border-radius: var(--border-radius);
-            cursor: pointer;
+            border-radius: 6px;
             font-size: 0.9rem;
-            transition: var(--transition);
         }
-
-        .category-tab:hover {
-            background-color: #ddd;
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
-
-        .category-tab.active {
-            background-color: var(--secondary-color);
+        
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
             color: white;
         }
-
-        .items-container {
-            max-height: calc(100vh - 250px);
-            overflow-y: auto;
-            margin-top: 10px;
+        
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
         }
-
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        /* Category tabs */
+        .category-tabs {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 8px;
+            margin-bottom: 15px;
+            position: sticky;
+            top: 170px;
+            background: white;
+            padding: 8px 0;
+            z-index: 80;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .category-tab {
+            padding: 6px 12px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .category-tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        /* Items list */
         .items-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
-
+        
         .item-row {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             background: white;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             border: 1px solid #eee;
             padding: 10px;
         }
-
-        .item-row:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
+        
         .item-image {
-            width: 80px;
-            height: 80px;
-            background-color: #f9f9f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-radius: 4px;
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-
-        .item-image img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .item-details {
-            flex: 1;
-            padding: 0 15px;
-            min-width: 0;
-        }
-
-        .item-code {
-            font-size: 0.85rem;
-            color: #7f8c8d;
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .item-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .item-price {
-            font-weight: 600;
-            color: var(--secondary-color);
-            font-size: 0.9rem;
-        }
-
-        .item-stock {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-            margin-top: 3px;
-        }
-
-        .item-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .quantity-input {
-            width: 60px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            text-align: center;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.85rem;
-        }
-
-        .btn-primary {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-success {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #219653;
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-
-        .btn-warning {
-            background-color: var(--warning-color);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background-color: #d35400;
-        }
-
-        .btn-info {
-            background-color: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background-color: #138496;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-
-        .image-upload {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            border: 2px dashed #ddd;
-            border-radius: var(--border-radius);
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .image-upload:hover {
-            border-color: var(--secondary-color);
-        }
-
-        .image-upload img {
-            max-width: 100%;
-            max-height: 200px;
-            margin-bottom: 10px;
-            border-radius: var(--border-radius);
-        }
-
-        .image-preview {
-            display: none;
-        }
-
-        .po-section {
-            border: 1px solid #eee;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            margin-top: 30px;
-        }
-
-        .po-items {
-            margin: 20px 0;
-        }
-
-        .po-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            transition: var(--transition);
-        }
-
-        .po-item:hover {
-            background-color: #f9f9f9;
-        }
-
-        .po-item-details {
-            flex: 1;
-        }
-
-        .po-item-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .po-item-code {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-        }
-
-        .po-item-qty {
-            margin: 0 20px;
-            font-weight: 600;
-        }
-
-        .po-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-            position: sticky;
-            bottom: 20px;
-            background: white;
-            padding: 15px 0;
-            z-index: 90;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #7f8c8d;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: #bdc3c7;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background-color: var(--success-color);
-            color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            transform: translateX(200%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            background-color: var(--danger-color);
-        }
-
-        .edit-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            position: sticky;
-            bottom: 20px;
-            background: white;
-            padding: 15px 0;
-            z-index: 90;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        /* Modal for image preview */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            overflow: auto;
-        }
-
-        .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 90%;
-            margin-top: 50px;
-        }
-
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            transition: 0.3s;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #bbb;
-        }
-
-        /* PO quantity edit */
-        .po-qty-input {
-            width: 60px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .po-qty-input:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-        }
-
-        /* Export options */
-        .export-options {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f5f5f5;
-            border-radius: var(--border-radius);
-        }
-
-        .export-options.active {
-            display: block;
-        }
-
-        .export-checkboxes {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .export-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* Stock view */
-        .stock-view {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .stock-view.active {
-            display: block;
-        }
-
-        .stock-items-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .stock-item-row {
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            border: 1px solid #eee;
-            padding: 10px;
-        }
-
-        .stock-item-row:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .stock-item-image {
             width: 60px;
             height: 60px;
             background-color: #f9f9f9;
@@ -660,23 +277,22 @@
             justify-content: center;
             overflow: hidden;
             border-radius: 4px;
-            flex-shrink: 0;
-            cursor: pointer;
+            margin-bottom: 8px;
         }
-
-        .stock-item-image img {
+        
+        .item-image img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
-
-        .stock-item-details {
+        
+        .item-details {
             flex: 1;
-            padding: 0 15px;
             min-width: 0;
+            margin-bottom: 8px;
         }
-
-        .stock-item-code {
+        
+        .item-code {
             font-size: 0.8rem;
             color: #7f8c8d;
             margin-bottom: 3px;
@@ -684,129 +300,324 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        .stock-item-name {
+        
+        .item-name {
             font-weight: 600;
             margin-bottom: 5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: 0.95rem;
+        }
+        
+        .item-price {
+            font-weight: 600;
+            color: #3498db;
             font-size: 0.9rem;
         }
-
-        .stock-item-stock {
+        
+        .item-stock {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        
+        .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .quantity-input {
+            width: 50px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        /* Form styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        /* Image upload */
+        .image-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 150px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        /* PO section */
+        .po-section {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .po-items {
+            margin: 15px 0;
+        }
+        
+        .po-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .po-item-details {
+            flex: 1;
+            margin-bottom: 8px;
+        }
+        
+        .po-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+        
+        .po-item-code {
             font-size: 0.8rem;
             color: #7f8c8d;
         }
-
-        .stock-item-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .stock-input {
-            width: 80px;
+        
+        .po-qty-input {
+            width: 50px;
             padding: 6px;
             border: 1px solid #ddd;
-            border-radius: var(--border-radius);
+            border-radius: 4px;
             text-align: center;
+            margin: 8px 0;
         }
-
-        /* Total items counter */
-        .total-items-counter {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 15px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            z-index: 100;
-            font-weight: 600;
+        
+        /* PO actions */
+        .po-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            position: sticky;
+            bottom: 15px;
+            background: white;
+            padding: 10px 0;
+            z-index: 90;
         }
-
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px 15px;
+            color: #7f8c8d;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        @media (max-width: 768px) {
-            .tabs {
-                flex-direction: column;
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 12px 20px;
+            background-color: #27ae60;
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            font-size: 0.9rem;
+            max-width: 80%;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background-color: #e74c3c;
+        }
+        
+        /* Image modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 95%;
+            max-height: 90%;
+            margin-top: 30px;
+        }
+        
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #f1f1f1;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Stock items */
+        .stock-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .stock-item-row {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+        
+        .stock-item-image {
+            width: 50px;
+            height: 50px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .stock-input {
+            width: 70px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 8px;
+        }
+        
+        /* Total items counter */
+        .total-items-counter {
+            position: fixed;
+            bottom: 80px;
+            left: 10px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        /* Export options */
+        .export-options {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+        }
+        
+        .export-options.active {
+            display: block;
+        }
+        
+        .export-checkboxes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .export-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (min-width: 480px) {
+            .item-row, .po-item, .stock-item-row {
+                flex-direction: row;
+                align-items: center;
             }
             
-            .tab {
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-            }
-            
-            .item-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .item-image {
-                margin-bottom: 10px;
+            .item-image, .stock-item-image {
+                margin-bottom: 0;
+                margin-right: 10px;
             }
             
             .item-actions {
-                width: 100%;
-                justify-content: flex-end;
-                margin-top: 10px;
+                margin-top: 0;
+                margin-left: auto;
             }
             
-            .po-item {
-                flex-direction: column;
-                align-items: flex-start;
+            .po-item-details {
+                margin-bottom: 0;
             }
             
-            .po-item-qty {
-                margin: 10px 0;
+            .po-qty-input {
+                margin: 0 10px;
             }
-
-            .export-checkboxes {
-                grid-template-columns: 1fr;
-            }
-
-            .total-items-counter {
-                bottom: 80px;
-                left: 10px;
-                font-size: 0.9rem;
-            }
-            
-            .last-hunt {
-                font-size: 2rem;
-                letter-spacing: 0.3rem;
-            }
-        }
-        
-        /* Full screen styles */
-        html, body {
-            width: 100%;
-            height: 100%;
-        }
-        
-        body {
-            padding: 0;
-            margin: 0;
-        }
-        
-        .container {
-            border-radius: 0;
-            box-shadow: none;
-            height: 100vh;
-            max-width: 100%;
-        }
-        
-        .tab-content {
-            height: calc(100vh - 180px);
-            overflow-y: auto;
-        }
-        
-        #browse .tab-content {
-            height: calc(100vh - 220px);
         }
     </style>
 </head>
@@ -818,7 +629,7 @@
             <span>A</span>
             <span>S</span>
             <span>T</span>
-            <span style="width: 1rem;"></span>
+            <span style="width: 0.5rem;"></span>
             <span>H</span>
             <span>U</span>
             <span>N</span>
@@ -831,43 +642,40 @@
     
     <div class="container">
         <header>
-            <h1>Purchase Order Management System</h1>
-            <p>Manage your inventory and create purchase orders easily</p>
+            <h1>Purchase Order System</h1>
+            <p>Manage inventory and create POs</p>
         </header>
         
         <div class="tabs">
-            <div class="tab active" data-tab="browse">Browse Items</div>
-            <div class="tab" data-tab="add">Add/Edit Items</div>
-            <div class="tab" data-tab="po">Purchase Orders</div>
-            <div class="tab" data-tab="stock">Stock Management</div>
+            <div class="tab active" data-tab="browse">Browse</div>
+            <div class="tab" data-tab="add">Add/Edit</div>
+            <div class="tab" data-tab="po">PO</div>
+            <div class="tab" data-tab="stock">Stock</div>
         </div>
         
         <!-- Browse Items Tab -->
         <div class="tab-content active" id="browse">
             <div class="search-container">
-                <input type="text" class="search-box" placeholder="Search by code or name..." id="searchItems">
+                <input type="text" class="search-box" placeholder="Search..." id="searchItems">
                 <button class="btn btn-primary" id="clearSearch">Clear</button>
             </div>
             
             <div class="category-tabs">
-                <div class="category-tab active" data-category="all">All Items</div>
-                <div class="category-tab" data-category="fiberglass">Fiberglass & Raw Materials</div>
-                <div class="category-tab" data-category="paints">Paints & Coatings</div>
-                <div class="category-tab" data-category="sanding">Sanding & Cutting</div>
+                <div class="category-tab active" data-category="all">All</div>
+                <div class="category-tab" data-category="fiberglass">Fiberglass</div>
+                <div class="category-tab" data-category="paints">Paints</div>
+                <div class="category-tab" data-category="sanding">Sanding</div>
                 <div class="category-tab" data-category="hardware">Hardware</div>
                 <div class="category-tab" data-category="electric">Electrical</div>
-                <div class="category-tab" data-category="tools">Tools & Equipment</div>
-                <div class="category-tab" data-category="safety">Safety Gear</div>
+                <div class="category-tab" data-category="tools">Tools</div>
+                <div class="category-tab" data-category="safety">Safety</div>
                 <div class="category-tab" data-category="consumables">Consumables</div>
             </div>
             
-            <div class="items-container">
-                <div class="items-list" id="itemsContainer">
-                    <!-- Items will be loaded here as a list -->
-                    <div class="empty-state">
-                        <div class="loading"></div>
-                        <p>Loading items...</p>
-                    </div>
+            <div class="items-list" id="itemsContainer">
+                <div class="empty-state">
+                    <div class="loading"></div>
+                    <p>Loading items...</p>
                 </div>
             </div>
         </div>
@@ -877,52 +685,51 @@
             <h2 id="formTitle">Add New Item</h2>
             <div class="form-group">
                 <label for="itemCode" class="form-label">Item Code*</label>
-                <input type="text" class="form-control" id="itemCode" placeholder="Enter unique item code">
+                <input type="text" class="form-control" id="itemCode" placeholder="Unique code">
             </div>
             <div class="form-group">
                 <label for="itemName" class="form-label">Item Name*</label>
-                <input type="text" class="form-control" id="itemName" placeholder="Enter item name">
+                <input type="text" class="form-control" id="itemName" placeholder="Item name">
             </div>
             <div class="form-group">
                 <label for="itemCategory" class="form-label">Category*</label>
                 <select class="form-control" id="itemCategory">
-                    <option value="fiberglass">Fiberglass & Raw Materials</option>
-                    <option value="paints">Paints & Coatings</option>
-                    <option value="sanding">Sanding & Cutting</option>
+                    <option value="fiberglass">Fiberglass</option>
+                    <option value="paints">Paints</option>
+                    <option value="sanding">Sanding</option>
                     <option value="hardware">Hardware</option>
                     <option value="electric">Electrical</option>
-                    <option value="tools">Tools & Equipment</option>
-                    <option value="safety">Safety Gear</option>
+                    <option value="tools">Tools</option>
+                    <option value="safety">Safety</option>
                     <option value="consumables">Consumables</option>
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label">Item Image</label>
                 <div class="image-upload" id="imageUpload">
-                    <div id="imagePlaceholder">Click to upload image or drag & drop</div>
+                    <div id="imagePlaceholder">Tap to upload image</div>
                     <img id="imagePreview" class="image-preview" src="" alt="Preview">
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
                 <label for="itemPrice" class="form-label">Unit Price (MVR)</label>
-                <input type="number" class="form-control" id="itemPrice" placeholder="Enter price per unit" step="0.01">
+                <input type="number" class="form-control" id="itemPrice" placeholder="Price" step="0.01">
             </div>
             <div class="form-group">
                 <label for="itemStock" class="form-label">Current Stock</label>
-                <input type="number" class="form-control" id="itemStock" placeholder="Enter current stock quantity" min="0">
+                <input type="number" class="form-control" id="itemStock" placeholder="Stock" min="0">
             </div>
             
             <div class="edit-actions">
-                <button class="btn btn-success" id="saveItem">Save Item</button>
-                <button class="btn btn-danger" id="deleteItem" style="display: none;">Delete Item</button>
+                <button class="btn btn-success" id="saveItem">Save</button>
+                <button class="btn btn-danger" id="deleteItem" style="display: none;">Delete</button>
                 <button class="btn btn-primary" id="cancelEdit" style="display: none;">Cancel</button>
             </div>
             
-            <div style="margin-top: 30px;">
+            <div style="margin-top: 20px;">
                 <h3>All Items</h3>
                 <div class="items-list" id="editItemsList">
-                    <!-- Items for editing will be loaded here -->
                     <div class="empty-state">
                         <div class="loading"></div>
                         <p>Loading items...</p>
@@ -937,21 +744,20 @@
             
             <div class="po-section">
                 <div class="po-items" id="poItems">
-                    <!-- PO items will be listed here -->
                     <div class="empty-state">
                         <div class="loading"></div>
-                        <p>Loading purchase order...</p>
+                        <p>Loading PO...</p>
                     </div>
                 </div>
                 
                 <div id="poSummary" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-radius: var(--border-radius);">
+                    <div style="display: flex; justify-content: space-between; margin: 15px 0; padding: 12px; background-color: #f9f9f9; border-radius: 6px;">
                         <div>
                             <h3>PO Summary</h3>
                             <p id="totalItems">0 items</p>
                         </div>
                         <div style="text-align: right;">
-                            <h3>Total Amount</h3>
+                            <h3>Total</h3>
                             <p id="totalAmount">MVR 0.00</p>
                         </div>
                     </div>
@@ -962,31 +768,31 @@
                     <h3>Export Options</h3>
                     <div class="export-checkboxes">
                         <label class="export-checkbox">
-                            <input type="checkbox" id="exportCode" checked> Item Code
+                            <input type="checkbox" id="exportCode" checked> Code
                         </label>
                         <label class="export-checkbox">
-                            <input type="checkbox" id="exportName" checked> Item Name
+                            <input type="checkbox" id="exportName" checked> Name
                         </label>
                         <label class="export-checkbox">
-                            <input type="checkbox" id="exportQty" checked> Quantity
+                            <input type="checkbox" id="exportQty" checked> Qty
                         </label>
                         <label class="export-checkbox">
-                            <input type="checkbox" id="exportPrice" checked> Unit Price
+                            <input type="checkbox" id="exportPrice" checked> Price
                         </label>
                         <label class="export-checkbox">
                             <input type="checkbox" id="exportTotal" checked> Total
                         </label>
                     </div>
                     <div>
-                        <button class="btn btn-primary" id="generateExport">Generate Export</button>
+                        <button class="btn btn-primary" id="generateExport">Generate</button>
                     </div>
                 </div>
                 
                 <div class="po-actions">
-                    <button class="btn btn-danger" id="clearPO">Clear PO</button>
-                    <button class="btn btn-primary" id="printPO">Print PO</button>
-                    <button class="btn btn-success" id="exportPDF">Export as PDF</button>
-                    <button class="btn btn-warning" id="shareViber">Share via Viber</button>
+                    <button class="btn btn-danger" id="clearPO">Clear</button>
+                    <button class="btn btn-primary" id="printPO">Print</button>
+                    <button class="btn btn-success" id="exportPDF">PDF</button>
+                    <button class="btn btn-warning" id="shareViber">Share</button>
                 </div>
             </div>
         </div>
@@ -996,31 +802,28 @@
             <h2>Stock Management</h2>
             
             <div class="search-container">
-                <input type="text" class="search-box" placeholder="Search stock items..." id="searchStock">
+                <input type="text" class="search-box" placeholder="Search stock..." id="searchStock">
                 <button class="btn btn-primary" id="clearStockSearch">Clear</button>
             </div>
             
             <div class="category-tabs">
-                <div class="category-tab active" data-category="all">All Items</div>
-                <div class="category-tab" data-category="low">Low Stock (<5)</div>
+                <div class="category-tab active" data-category="all">All</div>
+                <div class="category-tab" data-category="low">Low Stock</div>
                 <div class="category-tab" data-category="out">Out of Stock</div>
             </div>
             
-            <div class="stock-view active" id="stockView">
-                <div class="stock-items-list" id="stockItemsList">
-                    <!-- Stock items will be loaded here -->
-                    <div class="empty-state">
-                        <div class="loading"></div>
-                        <p>Loading stock items...</p>
-                    </div>
+            <div class="stock-items-list" id="stockItemsList">
+                <div class="empty-state">
+                    <div class="loading"></div>
+                    <p>Loading stock...</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Total Items Counter -->
-    <div class="total-items-counter" id="totalItemsCounter" style="display: none;">
-        Total Items: <span id="totalItemsCount">0</span>
+    <div class="total-items-counter" id="totalItemsCounter">
+        Items: <span id="totalItemsCount">0</span>
     </div>
 
     <!-- Image Preview Modal -->
@@ -1029,7 +832,7 @@
         <img class="modal-content" id="modalImage">
     </div>
 
-    <div class="notification" id="notification">Item added successfully!</div>
+    <div class="notification" id="notification">Item added!</div>
 
     <script>
         // Firebase configuration
@@ -1054,7 +857,7 @@
         // Constants
         const DEFAULT_IMAGE = 'https://via.placeholder.com/300?text=No+Image';
         const CURRENCY = 'MVR';
-        const LOW_STOCK_THRESHOLD = 5; // Items with stock below this are considered low
+        const LOW_STOCK_THRESHOLD = 5;
         
         // DOM elements
         const itemsContainer = document.getElementById('itemsContainer');
@@ -1103,17 +906,14 @@
                 letter.style.animationDelay = `${index * 0.1}s`;
             });
             
-            // After animation completes, show main content
             setTimeout(() => {
                 preloader.style.opacity = '0';
                 setTimeout(() => {
                     preloader.style.display = 'none';
                     document.querySelector('.container').style.display = 'block';
-                    
-                    // Initialize the app
                     initializeApp();
                 }, 500);
-            }, 3000); // Match this with the loading bar animation duration
+            }, 2500);
         }
 
         // Initialize the application after preloader
@@ -1134,31 +934,28 @@
                 tab.addEventListener('click', function() {
                     const tabId = this.getAttribute('data-tab');
                     
-                    if (tabId) {
-                        // Main tabs
-                        document.querySelectorAll('.tab-content').forEach(content => {
-                            content.classList.remove('active');
-                        });
-                        document.getElementById(tabId).classList.add('active');
-                        
-                        document.querySelectorAll('.tabs .tab').forEach(t => {
-                            t.classList.remove('active');
-                        });
-                        this.classList.add('active');
-                        
-                        // Refresh views when switching tabs
-                        if (tabId === 'browse') {
-                            const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
-                            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-                            loadItems(category);
-                        } else if (tabId === 'po') {
-                            loadPO();
-                        } else if (tabId === 'add') {
-                            loadItemsForEditing();
-                            resetForm();
-                        } else if (tabId === 'stock') {
-                            loadStockItems();
-                        }
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    document.querySelectorAll('.tabs .tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Refresh views when switching tabs
+                    if (tabId === 'browse') {
+                        const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
+                        const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                        loadItems(category);
+                    } else if (tabId === 'po') {
+                        loadPO();
+                    } else if (tabId === 'add') {
+                        loadItemsForEditing();
+                        resetForm();
+                    } else if (tabId === 'stock') {
+                        loadStockItems();
                     }
                 });
             });
@@ -1197,7 +994,7 @@
                 
                 itemsRef.once('value').then(snapshot => {
                     const items = snapshot.val() || [];
-                    allItems = items; // Store all items for stock management
+                    allItems = items;
                     displayItems(items, category);
                     updateTotalItemsCount(items);
                 }).catch(error => {
@@ -1240,10 +1037,10 @@
                 
                 if (filteredItems.length === 0) {
                     itemsContainer.innerHTML = `
-                        <div class="empty-state" style="grid-column: 1 / -1;">
-                            <i>🔍</i>
+                        <div class="empty-state">
+                            <div>🔍</div>
                             <h3>No items found</h3>
-                            <p>Try a different search or category</p>
+                            <p>Try a different search</p>
                         </div>
                     `;
                     return;
@@ -1264,7 +1061,7 @@
                         </div>
                         <div class="item-actions">
                             <input type="number" class="quantity-input" value="1" min="1">
-                            <button class="btn btn-primary btn-sm add-to-po" data-code="${item.code}">Add to PO</button>
+                            <button class="btn btn-primary btn-sm add-to-po" data-code="${item.code}">Add</button>
                         </div>
                     `;
                     itemsContainer.appendChild(itemRow);
@@ -1278,7 +1075,7 @@
                         const quantity = parseInt(this.parentElement.querySelector('.quantity-input').value) || 1;
                         
                         addToPO(item, quantity);
-                        showNotification('Item added to PO');
+                        showNotification('Added to PO');
                     });
                 });
 
@@ -1293,15 +1090,15 @@
 
             // Load stock items
             function loadStockItems(category = 'all') {
-                stockItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading stock items...</p></div>';
+                stockItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading stock...</p></div>';
                 
                 itemsRef.once('value').then(snapshot => {
                     const items = snapshot.val() || [];
-                    allItems = items; // Store all items for stock management
+                    allItems = items;
                     displayStockItems(items, category);
                 }).catch(error => {
-                    console.error('Error loading stock items:', error);
-                    showNotification('Error loading stock items', true);
+                    console.error('Error loading stock:', error);
+                    showNotification('Error loading stock', true);
                 });
             }
 
@@ -1333,11 +1130,11 @@
                 
                 if (filteredItems.length === 0) {
                     stockItemsList.innerHTML = `
-                        <div class="empty-state" style="grid-column: 1 / -1;">
-                            <i>📦</i>
+                        <div class="empty-state">
+                            <div>📦</div>
                             <h3>No items found</h3>
-                            <p>${category === 'all' ? 'No items in inventory' : 
-                               category === 'low' ? 'No low stock items' : 'No out of stock items'}</p>
+                            <p>${category === 'all' ? 'No items' : 
+                               category === 'low' ? 'No low stock' : 'No out of stock'}</p>
                         </div>
                     `;
                     return;
@@ -1363,7 +1160,7 @@
                             stockStatus = 'Out of Stock';
                             stockColor = '#e74c3c';
                         } else if (item.stock <= LOW_STOCK_THRESHOLD) {
-                            stockStatus = `Low Stock (${item.stock})`;
+                            stockStatus = `Low (${item.stock})`;
                             stockColor = '#f39c12';
                         } else {
                             stockStatus = `In Stock (${item.stock})`;
@@ -1410,7 +1207,6 @@
 
             // Update stock for an item
             function updateStock(code, newStock) {
-                // Find the item key in Firebase
                 itemsRef.once('value').then(snapshot => {
                     const items = snapshot.val() || {};
                     let itemKey = null;
@@ -1427,17 +1223,12 @@
                         return;
                     }
                     
-                    // Update the stock
                     itemsRef.child(itemKey).update({ stock: newStock })
                         .then(() => {
-                            showNotification('Stock updated successfully');
-                            
-                            // Reload stock items
+                            showNotification('Stock updated');
                             const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
                             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
                             loadStockItems(category);
-                            
-                            // Update the item in allItems
                             allItems[itemKey].stock = newStock;
                         })
                         .catch(error => {
@@ -1457,9 +1248,9 @@
                     if (Object.keys(items).length === 0) {
                         editItemsList.innerHTML = `
                             <div class="empty-state">
-                                <i>📦</i>
-                                <h3>No items in inventory</h3>
-                                <p>Add your first item using the form above</p>
+                                <div>📦</div>
+                                <h3>No items</h3>
+                                <p>Add your first item</p>
                             </div>
                         `;
                         return;
@@ -1512,7 +1303,7 @@
                         });
                     });
                 }).catch(error => {
-                    console.error('Error loading items for editing:', error);
+                    console.error('Error loading items:', error);
                     showNotification('Error loading items', true);
                 });
             }
@@ -1555,14 +1346,14 @@
                     // Scroll to top
                     window.scrollTo(0, 0);
                 }).catch(error => {
-                    console.error('Error loading item for editing:', error);
+                    console.error('Error loading item:', error);
                     showNotification('Error loading item', true);
                 });
             }
 
             // Delete item
             function deleteItem(code) {
-                if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) {
+                if (!confirm('Delete this item? This cannot be undone.')) {
                     return;
                 }
                 
@@ -1609,7 +1400,7 @@
                                     resetForm();
                                 }
                                 
-                                showNotification('Item deleted successfully');
+                                showNotification('Item deleted');
                             });
                         })
                         .catch(error => {
@@ -1650,43 +1441,10 @@
                 if (!file) return;
                 
                 if (!file.type.match('image.*')) {
-                    showNotification('Please select an image file', true);
+                    showNotification('Please select an image', true);
                     return;
                 }
                 
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    imagePreview.src = event.target.result;
-                    imagePreview.style.display = 'block';
-                    imagePlaceholder.style.display = 'none';
-                    currentImageFile = file;
-                };
-                reader.readAsDataURL(file);
-            });
-
-            // Drag and drop for image
-            imageUpload.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                imageUpload.style.borderColor = 'var(--secondary-color)';
-            });
-
-            imageUpload.addEventListener('dragleave', () => {
-                imageUpload.style.borderColor = '#ddd';
-            });
-
-            imageUpload.addEventListener('drop', (e) => {
-                e.preventDefault();
-                imageUpload.style.borderColor = '#ddd';
-                
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
-                
-                if (!file.type.match('image.*')) {
-                    showNotification('Please drop an image file', true);
-                    return;
-                }
-                
-                fileInput.files = e.dataTransfer.files;
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     imagePreview.src = event.target.result;
@@ -1716,11 +1474,11 @@
                         const newQuantity = poItems[existingItemKey].quantity + quantity;
                         poRef.child(existingItemKey).update({ quantity: newQuantity })
                             .then(() => {
-                                showNotification('Item quantity updated in PO');
+                                showNotification('Quantity updated');
                                 updatePOView();
                             })
                             .catch(error => {
-                                console.error('Error updating PO item:', error);
+                                console.error('Error updating PO:', error);
                                 showNotification('Error updating PO', true);
                             });
                     } else {
@@ -1732,7 +1490,7 @@
                         
                         poRef.push(newItem)
                             .then(() => {
-                                showNotification('Item added to PO');
+                                showNotification('Added to PO');
                                 updatePOView();
                             })
                             .catch(error => {
@@ -1745,21 +1503,20 @@
 
             // Load PO from Firebase
             function loadPO() {
-                poItemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading purchase order...</p></div>';
+                poItemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading PO...</p></div>';
                 
                 poRef.on('value', snapshot => {
                     currentPOItems = snapshot.val() || [];
                     updatePOView(currentPOItems);
                 }, error => {
                     console.error('Error loading PO:', error);
-                    showNotification('Error loading purchase order', true);
+                    showNotification('Error loading PO', true);
                 });
             }
 
             // Update PO view
             function updatePOView(poItems = null) {
                 if (!poItems) {
-                    // If poItems not provided, get from Firebase
                     poRef.once('value').then(snapshot => {
                         currentPOItems = snapshot.val() || [];
                         updatePOView(currentPOItems);
@@ -1770,9 +1527,9 @@
                 if (Object.keys(poItems).length === 0) {
                     poItemsContainer.innerHTML = `
                         <div class="empty-state">
-                            <i>📦</i>
-                            <h3>Your PO is empty</h3>
-                            <p>Add items from the Browse tab to create a purchase order</p>
+                            <div>📦</div>
+                            <h3>PO is empty</h3>
+                            <p>Add items from Browse tab</p>
                         </div>
                     `;
                     poSummary.style.display = 'none';
@@ -1796,12 +1553,12 @@
                     poItem.innerHTML = `
                         <div class="po-item-details">
                             <div class="po-item-name">${item.name}</div>
-                            <div class="po-item-code">${item.code} | ${CURRENCY} ${item.price?.toFixed(2) || '0.00'} each</div>
+                            <div class="po-item-code">${item.code} | ${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
                         </div>
                         <div>
                             <input type="number" class="po-qty-input" value="${item.quantity}" min="1" data-key="${Object.keys(poItems)[index]}">
                         </div>
-                        <div style="font-weight: 600; color: var(--secondary-color);">
+                        <div style="font-weight: 600; color: #3498db;">
                             ${CURRENCY} ${((item.price || 0) * item.quantity).toFixed(2)}
                         </div>
                         <button class="btn btn-danger remove-from-po" data-code="${item.code}">×</button>
@@ -1855,10 +1612,10 @@
                     if (itemKey) {
                         poRef.child(itemKey).remove()
                             .then(() => {
-                                showNotification('Item removed from PO');
+                                showNotification('Item removed');
                             })
                             .catch(error => {
-                                console.error('Error removing from PO:', error);
+                                console.error('Error removing item:', error);
                                 showNotification('Error removing item', true);
                             });
                     }
@@ -1869,14 +1626,14 @@
             document.getElementById('clearPO').addEventListener('click', function() {
                 poRef.once('value').then(snapshot => {
                     if (!snapshot.val() || Object.keys(snapshot.val()).length === 0) {
-                        showNotification('PO is already empty', true);
+                        showNotification('PO is empty', true);
                         return;
                     }
                     
-                    if (confirm('Are you sure you want to clear the entire PO?')) {
+                    if (confirm('Clear the entire PO?')) {
                         poRef.remove()
                             .then(() => {
-                                showNotification('PO cleared successfully');
+                                showNotification('PO cleared');
                             })
                             .catch(error => {
                                 console.error('Error clearing PO:', error);
@@ -1892,7 +1649,7 @@
                     const poItems = snapshot.val() || [];
                     
                     if (Object.keys(poItems).length === 0) {
-                        showNotification('PO is empty. Add items first.', true);
+                        showNotification('PO is empty', true);
                         return;
                     }
                     
@@ -1905,15 +1662,15 @@
                         <head>
                             <title>Purchase Order</title>
                             <style>
-                                body { font-family: Arial, sans-serif; margin: 20px; }
-                                h1 { color: #2c3e50; text-align: center; }
-                                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                                body { font-family: Arial, sans-serif; margin: 10px; }
+                                h1 { color: #2c3e50; text-align: center; font-size: 1.5rem; }
+                                table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9rem; }
+                                th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
                                 th { background-color: #f2f2f2; }
                                 .total { font-weight: bold; text-align: right; }
-                                .header { margin-bottom: 30px; }
-                                .footer { margin-top: 30px; text-align: right; }
-                                .checkbox { width: 20px; height: 20px; }
+                                .header { margin-bottom: 20px; }
+                                .footer { margin-top: 20px; text-align: right; }
+                                .checkbox { width: 16px; height: 16px; }
                             </style>
                         </head>
                         <body>
@@ -1944,7 +1701,7 @@
                     const poItems = snapshot.val() || [];
                     
                     if (Object.keys(poItems).length === 0) {
-                        showNotification('PO is empty. Add items first.', true);
+                        showNotification('PO is empty', true);
                         return;
                     }
                     
@@ -1952,11 +1709,11 @@
                     const doc = new jsPDF();
                     
                     // Add title
-                    doc.setFontSize(18);
+                    doc.setFontSize(16);
                     doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
                     
                     // Add date
-                    doc.setFontSize(12);
+                    doc.setFontSize(10);
                     doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
                     
                     // Create table data
@@ -1968,7 +1725,7 @@
                         totalAmount += itemTotal;
                         
                         tableData.push([
-                            { content: '', styles: { cellWidth: 10 } },
+                            { content: '', styles: { cellWidth: 8 } },
                             item.code,
                             item.name,
                             { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
@@ -1988,216 +1745,10 @@
                         startY: 30,
                         head: [
                             [
-                                { content: '✔', styles: { cellWidth: 10 } },
+                                { content: '✔', styles: { cellWidth: 8 } },
                                 'Code',
                                 'Description',
-                                { content: 'Unit Price', styles: { halign: 'right' } },
-                                { content: 'Qty', styles: { halign: 'center' } },
-                                { content: 'Total', styles: { halign: 'right' } }
-                            ]
-                        ],
-                        body: tableData,
-                        theme: 'grid',
-                        headStyles: {
-                            fillColor: [44, 62, 80], // Dark blue color
-                            textColor: 255, // White text
-                            fontStyle: 'bold'
-                        },
-                        columnStyles: {
-                            0: { cellWidth: 10 }, // Checkbox column
-                            1: { cellWidth: 30 }, // Code column
-                            2: { cellWidth: 'auto' }, // Description column
-                            3: { cellWidth: 30 }, // Unit price column
-                            4: { cellWidth: 20 }, // Qty column
-                            5: { cellWidth: 30 } // Total column
-                        },
-                        didDrawCell: function(data) {
-                            // Draw checkboxes in the first column (except header and total row)
-                            if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
-                                doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
-                            }
-                        }
-                    };
-                    
-                    // Generate the table
-                    doc.autoTable(options);
-                    
-                    // Add signature line
-                    doc.setFontSize(12);
-                    doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
-                    doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
-                    
-                    // Save the PDF
-                    doc.save(`PurchaseOrder_${new Date().toISOString().slice(0,10)}.pdf`);
-                    showNotification('PO exported as PDF');
-                });
-            });
-
-            // Generate Export based on selected options
-            generateExportBtn.addEventListener('click', function() {
-                const includeCode = document.getElementById('exportCode').checked;
-                const includeName = document.getElementById('exportName').checked;
-                const includeQty = document.getElementById('exportQty').checked;
-                const includePrice = document.getElementById('exportPrice').checked;
-                const includeTotal = document.getElementById('exportTotal').checked;
-                
-                if (!includeCode && !includeName && !includeQty && !includePrice && !includeTotal) {
-                    showNotification('Please select at least one export option', true);
-                    return;
-                }
-                
-                // Create a new jsPDF instance
-                const doc = new jsPDF();
-                
-                // Add title
-                doc.setFontSize(18);
-                doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
-                
-                // Add date
-                doc.setFontSize(12);
-                doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
-                
-                // Create table data
-                const tableData = [];
-                let totalAmount = 0;
-                
-                Object.values(currentPOItems).forEach(item => {
-                    const itemTotal = (item.price || 0) * item.quantity;
-                    totalAmount += itemTotal;
-                    
-                    const rowData = [];
-                    
-                    // Add checkbox
-                    rowData.push({ content: '', styles: { cellWidth: 10 } });
-                    
-                    // Add selected columns
-                    if (includeCode) rowData.push(item.code);
-                    if (includeName) rowData.push(item.name);
-                    if (includePrice) rowData.push({ content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } });
-                    if (includeQty) rowData.push({ content: item.quantity.toString(), styles: { halign: 'center' } });
-                    if (includeTotal) rowData.push({ content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } });
-                    
-                    tableData.push(rowData);
-                });
-                
-                // Add total row if total is included
-                if (includeTotal) {
-                    const totalRow = [];
-                    totalRow.push({ content: '', colSpan: 1, styles: { cellWidth: 10 } });
-                    
-                    // Calculate colspan based on selected columns
-                    let colspan = 0;
-                    if (includeCode) colspan++;
-                    if (includeName) colspan++;
-                    if (includePrice) colspan++;
-                    if (includeQty) colspan++;
-                    
-                    totalRow.push({ content: 'Total:', colSpan: colspan, styles: { halign: 'right', fontStyle: 'bold' } });
-                    totalRow.push({ content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } });
-                    
-                    tableData.push(totalRow);
-                }
-                
-                // Prepare headers
-                const headers = [];
-                headers.push({ content: '✔', styles: { cellWidth: 10 } });
-                if (includeCode) headers.push('Code');
-                if (includeName) headers.push('Description');
-                if (includePrice) headers.push({ content: 'Unit Price', styles: { halign: 'right' } });
-                if (includeQty) headers.push({ content: 'Qty', styles: { halign: 'center' } });
-                if (includeTotal) headers.push({ content: 'Total', styles: { halign: 'right' } });
-                
-                // AutoTable options
-                const options = {
-                    startY: 30,
-                    head: [headers],
-                    body: tableData,
-                    theme: 'grid',
-                    headStyles: {
-                        fillColor: [44, 62, 80], // Dark blue color
-                        textColor: 255, // White text
-                        fontStyle: 'bold'
-                    },
-                    didDrawCell: function(data) {
-                        // Draw checkboxes in the first column (except header and total row)
-                        if (data.column.index === 0 && data.row.index > 0 && 
-                            (includeTotal ? data.row.index < tableData.length - 1 : true)) {
-                            doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
-                        }
-                    }
-                };
-                
-                // Generate the table
-                doc.autoTable(options);
-                
-                // Add signature line
-                doc.setFontSize(12);
-                doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
-                doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
-                
-                // Save the PDF
-                const fileName = `PO_Export_${new Date().toISOString().slice(0,10)}.pdf`;
-                doc.save(fileName);
-                showNotification('Custom export generated');
-                
-                // Return the PDF data for sharing
-                return doc.output('datauristring');
-            });
-
-            // Share via Viber with PDF attachment
-            shareViberBtn.addEventListener('click', async function() {
-                poRef.once('value').then(async snapshot => {
-                    const poItems = snapshot.val() || [];
-                    
-                    if (Object.keys(poItems).length === 0) {
-                        showNotification('PO is empty. Add items first.', true);
-                        return;
-                    }
-                    
-                    // First generate the PDF
-                    const doc = new jsPDF();
-                    
-                    // Add title
-                    doc.setFontSize(18);
-                    doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
-                    
-                    // Add date
-                    doc.setFontSize(12);
-                    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
-                    
-                    // Create table data
-                    const tableData = [];
-                    let totalAmount = 0;
-                    
-                    Object.values(poItems).forEach(item => {
-                        const itemTotal = (item.price || 0) * item.quantity;
-                        totalAmount += itemTotal;
-                        
-                        tableData.push([
-                            { content: '', styles: { cellWidth: 10 } },
-                            item.code,
-                            item.name,
-                            { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
-                            { content: item.quantity.toString(), styles: { halign: 'center' } },
-                            { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
-                        ]);
-                    });
-                    
-                    // Add total row
-                    tableData.push([
-                        { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
-                        { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
-                    ]);
-                    
-                    // AutoTable options
-                    const options = {
-                        startY: 30,
-                        head: [
-                            [
-                                { content: '✔', styles: { cellWidth: 10 } },
-                                'Code',
-                                'Description',
-                                { content: 'Unit Price', styles: { halign: 'right' } },
+                                { content: 'Price', styles: { halign: 'right' } },
                                 { content: 'Qty', styles: { halign: 'center' } },
                                 { content: 'Total', styles: { halign: 'right' } }
                             ]
@@ -2207,19 +1758,24 @@
                         headStyles: {
                             fillColor: [44, 62, 80],
                             textColor: 255,
-                            fontStyle: 'bold'
+                            fontStyle: 'bold',
+                            fontSize: 9
                         },
                         columnStyles: {
-                            0: { cellWidth: 10 },
-                            1: { cellWidth: 30 },
+                            0: { cellWidth: 8 },
+                            1: { cellWidth: 25 },
                             2: { cellWidth: 'auto' },
-                            3: { cellWidth: 30 },
-                            4: { cellWidth: 20 },
-                            5: { cellWidth: 30 }
+                            3: { cellWidth: 25 },
+                            4: { cellWidth: 15 },
+                            5: { cellWidth: 25 },
+                        },
+                        styles: {
+                            fontSize: 8,
+                            cellPadding: 3
                         },
                         didDrawCell: function(data) {
                             if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
-                                doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+                                doc.rect(data.cell.x + 2, data.cell.y + 2, 8, 8);
                             }
                         }
                     };
@@ -2228,35 +1784,13 @@
                     doc.autoTable(options);
                     
                     // Add signature line
-                    doc.setFontSize(12);
-                    doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
-                    doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
+                    doc.setFontSize(10);
+                    doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 15);
+                    doc.line(50, doc.lastAutoTable.finalY + 20, 100, doc.lastAutoTable.finalY + 20);
                     
-                    // Get PDF as base64
-                    const pdfBase64 = doc.output('datauristring');
-                    
-                    // Create PO text for sharing
-                    let poText = 'Purchase Order Request%0A%0A';
-                    poText += 'Items:%0A';
-                    
-                    Object.values(poItems).forEach(item => {
-                        const itemTotal = (item.price || 0) * item.quantity;
-                        poText += `- ${item.code} ${item.name} (Qty: ${item.quantity}) - ${CURRENCY} ${itemTotal.toFixed(2)}%0A`;
-                    });
-                    
-                    poText += `%0ATotal Amount: ${CURRENCY} ${totalAmount.toFixed(2)}%0A`;
-                    poText += 'Please see attached PDF for details.%0A';
-                    poText += 'Please process this order. Thank you!';
-                    
-                    // For Viber web, we can't directly share files, so we'll share the text with a download link
-                    // In a mobile app, you would use the Viber SDK to share the file
-                    const fileName = `PO_${new Date().toISOString().slice(0,10)}.pdf`;
-                    const downloadLink = `data:application/pdf;base64,${pdfBase64.split(',')[1]}`;
-                    
-                    // Open Viber share link with download instructions
-                    window.open(`viber://forward?text=${encodeURIComponent(poText + '%0A%0ADownload PO: ' + downloadLink)}`, '_blank');
-                    
-                    showNotification('PO shared via Viber with download link');
+                    // Save the PDF
+                    doc.save(`PO_${new Date().toISOString().slice(0,10)}.pdf`);
+                    showNotification('PDF exported');
                 });
             });
 
@@ -2269,7 +1803,7 @@
                 const stock = parseInt(document.getElementById('itemStock').value) || 0;
                 
                 if (!code || !name) {
-                    showNotification('Item code and name are required', true);
+                    showNotification('Code and name required', true);
                     return;
                 }
                 
@@ -2283,7 +1817,7 @@
                             const codeExists = Object.values(items).some(item => item.code === code);
                             
                             if (codeExists) {
-                                showNotification('Item with this code already exists', true);
+                                showNotification('Code already exists', true);
                                 return;
                             }
                             
@@ -2301,7 +1835,7 @@
                         const codeExists = Object.values(items).some(item => item.code === code);
                         
                         if (codeExists) {
-                            showNotification('Item with this code already exists', true);
+                            showNotification('Code already exists', true);
                             return;
                         }
                         
@@ -2365,7 +1899,7 @@
                                             }
                                         }
                                         
-                                        showNotification('Item updated successfully');
+                                        showNotification('Item updated');
                                         resetForm();
                                         loadItemsForEditing();
                                         loadStockItems();
@@ -2397,7 +1931,7 @@
                                         }
                                     }
                                     
-                                    showNotification('Item updated successfully');
+                                    showNotification('Item updated');
                                     resetForm();
                                     loadItemsForEditing();
                                     loadStockItems();
@@ -2431,7 +1965,7 @@
                         // Add the item to Firebase
                         itemsRef.push(newItem)
                             .then(() => {
-                                showNotification('Item added successfully');
+                                showNotification('Item added');
                                 resetForm();
                                 loadItemsForEditing();
                                 loadStockItems();
@@ -2446,7 +1980,7 @@
                     // Add without image
                     itemsRef.push(newItem)
                         .then(() => {
-                            showNotification('Item added successfully');
+                            showNotification('Item added');
                             resetForm();
                             loadItemsForEditing();
                             loadStockItems();
@@ -2457,13 +1991,6 @@
                         });
                 }
             }
-
-            // Delete item button
-            deleteBtn.addEventListener('click', function() {
-                if (currentEditItem) {
-                    deleteItem(currentEditItem.code);
-                }
-            });
 
             // Clear search
             clearSearchBtn.addEventListener('click', function() {
@@ -2485,7 +2012,7 @@
             searchItemsInput.addEventListener('input', function() {
                 const activeCategoryTab = document.querySelector('#browse .category-tabs .active');
                 const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-                loadItems(category);
+                loadItems(category);http://127.0.0.1:3000/index.html
             });
 
             // Stock search functionality
@@ -2512,10 +2039,10 @@
                     <thead>
                         <tr>
                             <th style="width: 20px;">✔</th>
-                            <th>Item Code</th>
+                            <th>Code</th>
                             <th>Description</th>
-                            <th>Unit Price</th>
-                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Qty</th>
                             <th>Total</th>
                         </tr>
                     </thead>
@@ -2542,7 +2069,7 @@
                 
                 content += `
                         <tr>
-                            <td colspan="5" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                            <td colspan="5" style="text-align: right; font-weight: bold;">Total:</td>
                             <td style="font-weight: bold;">${CURRENCY} ${grandTotal.toFixed(2)}</td>
                         </tr>
                     </tbody>
@@ -2562,10 +2089,6 @@
         // Start the animation when page loads
         window.onload = function() {
             animateLastHuntText();
-            
-            // Make the page full screen
-            document.documentElement.style.height = '100%';
-            document.body.style.height = '100%';
         };
     </script>
 </body>
