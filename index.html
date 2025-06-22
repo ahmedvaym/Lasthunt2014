@@ -3,237 +3,2006 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales & Request Purchase Orders</title>
-    <!-- Include jsPDF and jsPDF-AutoTable libraries -->
+    <title>Advanced PO Management System</title>
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <!-- Add jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: var(--light-color);
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--dark-color);
+            transition: var(--transition);
+            border-right: 1px solid #ddd;
+        }
+
+        .tab:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .tab.active {
+            background-color: white;
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-container {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-tab {
+            padding: 8px 16px;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .category-tab:hover {
+            background-color: #ddd;
+        }
+
+        .category-tab.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+
+        .item-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .item-details {
+            flex: 1;
+            padding: 0 15px;
+            min-width: 0;
+        }
+
+        .item-code {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .quantity-input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #219653;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .image-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .image-upload:hover {
+            border-color: var(--secondary-color);
+        }
+
+        .image-upload img {
+            max-width: 100%;
+            max-height: 200px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+        }
+
+        .image-preview {
+            display: none;
+        }
+
+        .po-section {
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .po-items {
+            margin: 20px 0;
+        }
+
+        .po-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: var(--transition);
+        }
+
+        .po-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .po-item-details {
+            flex: 1;
+        }
+
+        .po-item-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .po-item-code {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .po-item-qty {
+            margin: 0 20px;
+            font-weight: 600;
+        }
+
+        .po-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        /* Modal for image preview */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            overflow: auto;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            margin-top: 50px;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #bbb;
+        }
+
+        /* PO quantity edit */
+        .po-qty-input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .po-qty-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        /* Export options */
+        .export-options {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: var(--border-radius);
+        }
+
+        .export-options.active {
+            display: block;
+        }
+
+        .export-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .export-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .item-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .item-image {
+                margin-bottom: 10px;
+            }
+            
+            .item-actions {
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 10px;
+            }
+            
+            .po-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .po-item-qty {
+                margin: 10px 0;
+            }
+
+            .export-checkboxes {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Sales & Request Purchase Orders</h1>
+        <header>
+            <h1>Purchase Order Management System</h1>
+            <p>Manage your inventory and create purchase orders easily</p>
+        </header>
         
-        <div class="button-group">
-            <button id="salesBtn" class="active">Sales</button>
-            <button id="requestPurchaseBtn">Request Purchase</button>
-            <button id="viewSalesBtn">View Sales</button>
-            <button id="viewPurchaseBtn">View Purchase Orders</button>
+        <div class="tabs">
+            <div class="tab active" data-tab="browse">Browse Items</div>
+            <div class="tab" data-tab="add">Add/Edit Items</div>
+            <div class="tab" data-tab="po">Purchase Orders</div>
         </div>
         
-        <!-- Sales Section -->
-        <div id="salesSection" class="section active">
-            <h2>New Sale</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="saleDate">Date</label>
-                    <input type="date" id="saleDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="customerName">Customer Name</label>
-                    <input type="text" id="customerName" placeholder="Enter customer name">
-                </div>
-                <div class="form-group">
-                    <label for="invoiceNumber">Invoice Number</label>
-                    <input type="text" id="invoiceNumber" placeholder="INV-0001">
-                </div>
+        <!-- Browse Items Tab -->
+        <div class="tab-content active" id="browse">
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="Search by code or name..." id="searchItems">
+                <button class="btn btn-primary" id="clearSearch">Clear</button>
             </div>
             
-            <h3>Items</h3>
-            <div id="salesItemsContainer">
-                <div class="item-row">
-                    <div class="form-group">
-                        <label for="itemCategory1">Category</label>
-                        <select id="itemCategory1" class="item-category">
-                            <option value="">Select Category</option>
-                            <option value="Wheel Barrow">Wheel Barrow</option>
-                            <option value="Fiber Items">Fiber Items</option>
-                            <option value="Hardware">Hardware</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="itemName1">Item Description</label>
-                        <input type="text" id="itemName1" class="item-name" placeholder="Item description">
-                    </div>
-                    <div class="form-group">
-                        <label for="itemQty1">Quantity</label>
-                        <input type="number" id="itemQty1" class="item-qty" min="1" value="1" oninput="calculateSalesRowTotal(this)">
-                    </div>
-                    <div class="form-group">
-                        <label for="itemPrice1">Price</label>
-                        <input type="number" id="itemPrice1" class="item-price" min="0" step="0.01" placeholder="0.00" oninput="calculateSalesRowTotal(this)">
-                    </div>
-                    <div class="form-group">
-                        <label>Total</label>
-                        <div class="item-total">0.00</div>
-                    </div>
-                    <button class="remove-btn" onclick="removeSalesItem(this)">Remove</button>
+            <div class="category-tabs">
+                <div class="category-tab active" data-category="all">All Items</div>
+                <div class="category-tab" data-category="fiberglass">Fiberglass & Raw Materials</div>
+                <div class="category-tab" data-category="paints">Paints</div>
+                <div class="category-tab" data-category="sanding">Sanding & Cutting</div>
+                <div class="category-tab" data-category="hardware">Hardware</div>
+                <div class="category-tab" data-category="electric">Electrical</div>
+                <div class="category-tab" data-category="drillbits">Drill Bits</div>
+                <div class="category-tab" data-category="taperolls">Tape Rolls</div>
+                <div class="category-tab" data-category="general">General Items</div>
+            </div>
+            
+            <div class="items-list" id="itemsContainer">
+                <!-- Items will be loaded here as a list -->
+                <div class="empty-state">
+                    <div class="loading"></div>
+                    <p>Loading items...</p>
                 </div>
-            </div>
-            
-            <button class="add-btn" onclick="addSalesItem()">Add Item</button>
-            
-            <div class="summary">
-                Total Amount: <span id="salesTotalAmount" class="total-display">0.00</span>
-            </div>
-            
-            <div class="button-group">
-                <button class="save-btn" onclick="saveSale()">Save Sale</button>
-                <button class="download-btn" onclick="downloadSale()">Download CSV</button>
-                <button class="pdf-btn" onclick="exportSaleToPDF()">Export PDF</button>
-            </div>
-            
-            <div id="salesAlert" class="alert hidden"></div>
-        </div>
-        
-        <!-- Request Purchase Order Section -->
-        <div id="requestPurchaseSection" class="section">
-            <h2>Request Purchase Order</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="poDate">Date</label>
-                    <input type="date" id="poDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="supplierName">Supplier Name</label>
-                    <input type="text" id="supplierName" placeholder="Enter supplier name">
-                </div>
-                <div class="form-group">
-                    <label for="poNumber">PO Number</label>
-                    <input type="text" id="poNumber" placeholder="PO-0001">
-                </div>
-            </div>
-            
-            <h3>Items Requested</h3>
-            <div id="poItemsContainer">
-                <div class="item-row">
-                    <div class="form-group">
-                        <label for="poItemName1">Item Description</label>
-                        <input type="text" id="poItemName1" class="po-item-name" placeholder="Item description">
-                    </div>
-                    <div class="form-group">
-                        <label for="poItemQty1">Quantity</label>
-                        <input type="number" id="poItemQty1" class="po-item-qty" min="1" value="1" oninput="calculatePORowTotal(this)">
-                    </div>
-                    <div class="form-group">
-                        <label for="poItemUnit1">Unit</label>
-                        <select id="poItemUnit1" class="po-item-unit">
-                            <option value="Pcs">Pcs</option>
-                            <option value="Kg">Kg</option>
-                            <option value="Ltr">Ltr</option>
-                            <option value="Box">Box</option>
-                            <option value="Set">Set</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="poItemPrice1">Unit Price</label>
-                        <input type="number" id="poItemPrice1" class="po-item-price" min="0" step="0.01" placeholder="0.00" oninput="calculatePORowTotal(this)">
-                    </div>
-                    <div class="form-group">
-                        <label>Total</label>
-                        <div class="po-item-total">0.00</div>
-                    </div>
-                    <button class="remove-btn" onclick="removePOItem(this)">Remove</button>
-                </div>
-            </div>
-            
-            <button class="add-btn" onclick="addPOItem()">Add Item</button>
-            
-            <div class="summary">
-                Total Amount: <span id="poTotalAmount" class="total-display">0.00</span>
-            </div>
-            
-            <div class="button-group">
-                <button class="save-btn" onclick="savePurchaseOrder()">Save Request</button>
-                <button class="download-btn" onclick="downloadPurchaseOrder()">Download CSV</button>
-                <button class="pdf-btn" onclick="exportPOToPDF()">Export PDF</button>
-            </div>
-            
-            <div id="poAlert" class="alert hidden"></div>
-        </div>
-        
-        <!-- View Sales Section -->
-        <div id="viewSalesSection" class="section">
-            <h2>Sales Records</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="salesStartDate">From Date</label>
-                    <input type="date" id="salesStartDate">
-                </div>
-                <div class="form-group">
-                    <label for="salesEndDate">To Date</label>
-                    <input type="date" id="salesEndDate">
-                </div>
-                <div class="form-group">
-                    <label for="salesCustomerFilter">Customer Filter</label>
-                    <input type="text" id="salesCustomerFilter" placeholder="Filter by customer">
-                </div>
-            </div>
-            
-            <div class="button-group">
-                <button onclick="filterSales()">Filter</button>
-                <button class="download-btn" onclick="downloadAllSales()">Download All CSV</button>
-                <button class="pdf-btn" onclick="exportAllSalesToPDF()">Export All PDF</button>
-            </div>
-            
-            <div style="overflow-x: auto;">
-                <table id="salesTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Invoice No.</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
             </div>
         </div>
         
-        <!-- View Purchase Orders Section -->
-        <div id="viewPurchaseSection" class="section">
-            <h2>Purchase Order Records</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="poStartDate">From Date</label>
-                    <input type="date" id="poStartDate">
-                </div>
-                <div class="form-group">
-                    <label for="poEndDate">To Date</label>
-                    <input type="date" id="poEndDate">
-                </div>
-                <div class="form-group">
-                    <label for="poSupplierFilter">Supplier Filter</label>
-                    <input type="text" id="poSupplierFilter" placeholder="Filter by supplier">
+        <!-- Add/Edit Items Tab -->
+        <div class="tab-content" id="add">
+            <h2 id="formTitle">Add New Item</h2>
+            <div class="form-group">
+                <label for="itemCode" class="form-label">Item Code*</label>
+                <input type="text" class="form-control" id="itemCode" placeholder="Enter unique item code">
+            </div>
+            <div class="form-group">
+                <label for="itemName" class="form-label">Item Name*</label>
+                <input type="text" class="form-control" id="itemName" placeholder="Enter item name">
+            </div>
+            <div class="form-group">
+                <label for="itemCategory" class="form-label">Category*</label>
+                <select class="form-control" id="itemCategory">
+                    <option value="fiberglass">Fiberglass & Raw Materials</option>
+                    <option value="paints">Paints</option>
+                    <option value="sanding">Sanding Disks & Cutting Wheels</option>
+                    <option value="hardware">Nails, Nuts, Washers, Screws</option>
+                    <option value="electric">Electrical Items</option>
+                    <option value="drillbits">Drill Bits</option>
+                    <option value="taperolls">Tape Rolls</option>
+                    <option value="general">General Items</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Item Image</label>
+                <div class="image-upload" id="imageUpload">
+                    <div id="imagePlaceholder">Click to upload image or drag & drop</div>
+                    <img id="imagePreview" class="image-preview" src="" alt="Preview">
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
                 </div>
             </div>
-            
-            <div class="button-group">
-                <button onclick="filterPurchaseOrders()">Filter</button>
-                <button class="download-btn" onclick="downloadAllPurchaseOrders()">Download All CSV</button>
-                <button class="pdf-btn" onclick="exportAllPOsToPDF()">Export All PDF</button>
+            <div class="form-group">
+                <label for="itemPrice" class="form-label">Unit Price (MVR)</label>
+                <input type="number" class="form-control" id="itemPrice" placeholder="Enter price per unit" step="0.01">
             </div>
             
-            <div style="overflow-x: auto;">
-                <table id="purchaseTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>PO Number</th>
-                            <th>Supplier</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div class="edit-actions">
+                <button class="btn btn-success" id="saveItem">Save Item</button>
+                <button class="btn btn-danger" id="deleteItem" style="display: none;">Delete Item</button>
+                <button class="btn btn-primary" id="cancelEdit" style="display: none;">Cancel</button>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <h3>All Items</h3>
+                <div class="items-list" id="editItemsList">
+                    <!-- Items for editing will be loaded here -->
+                    <div class="empty-state">
+                        <div class="loading"></div>
+                        <p>Loading items...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Purchase Orders Tab -->
+        <div class="tab-content" id="po">
+            <h2>Current Purchase Order</h2>
+            
+            <div class="po-section">
+                <div class="po-items" id="poItems">
+                    <!-- PO items will be listed here -->
+                    <div class="empty-state">
+                        <div class="loading"></div>
+                        <p>Loading purchase order...</p>
+                    </div>
+                </div>
+                
+                <div id="poSummary" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-radius: var(--border-radius);">
+                        <div>
+                            <h3>PO Summary</h3>
+                            <p id="totalItems">0 items</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h3>Total Amount</h3>
+                            <p id="totalAmount">MVR 0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="export-options" id="exportOptions">
+                    <h3>Export Options</h3>
+                    <div class="export-checkboxes">
+                        <label class="export-checkbox">
+                            <input type="checkbox" id="exportCode" checked> Item Code
+                        </label>
+                        <label class="export-checkbox">
+                            <input type="checkbox" id="exportName" checked> Item Name
+                        </label>
+                        <label class="export-checkbox">
+                            <input type="checkbox" id="exportQty" checked> Quantity
+                        </label>
+                        <label class="export-checkbox">
+                            <input type="checkbox" id="exportPrice" checked> Unit Price
+                        </label>
+                        <label class="export-checkbox">
+                            <input type="checkbox" id="exportTotal" checked> Total
+                        </label>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" id="generateExport">Generate Export</button>
+                    </div>
+                </div>
+                
+                <div class="po-actions">
+                    <button class="btn btn-danger" id="clearPO">Clear PO</button>
+                    <button class="btn btn-primary" id="printPO">Print PO</button>
+                    <button class="btn btn-success" id="exportPDF">Export as PDF</button>
+                    <button class="btn btn-warning" id="shareViber">Share via Viber</button>
+                </div>
             </div>
         </div>
     </div>
 
-   <script src="script.js"></script>
+    <!-- Image Preview Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <div class="notification" id="notification">Item added successfully!</div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmy836Pc3NBJfqv7ovKeLuXEroEKKljes",
+            authDomain: "delivery-d07af.firebaseapp.com",
+            databaseURL: "https://delivery-d07af-default-rtdb.firebaseio.com",
+            projectId: "delivery-d07af",
+            storageBucket: "delivery-d07af.appspot.com",
+            messagingSenderId: "18177223806",
+            appId: "1:18177223806:web:e09f3abf45b6d25fc2fc2f",
+            measurementId: "G-V7TC88WW4L"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // Constants
+        const DEFAULT_IMAGE = 'https://via.placeholder.com/300?text=No+Image';
+        const CURRENCY = 'MVR';
+        
+        // DOM elements
+        const itemsContainer = document.getElementById('itemsContainer');
+        const searchItemsInput = document.getElementById('searchItems');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const poItemsContainer = document.getElementById('poItems');
+        const poSummary = document.getElementById('poSummary');
+        const notification = document.getElementById('notification');
+        const editItemsList = document.getElementById('editItemsList');
+        const formTitle = document.getElementById('formTitle');
+        const deleteBtn = document.getElementById('deleteItem');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePlaceholder = document.getElementById('imagePlaceholder');
+        const fileInput = document.getElementById('fileInput');
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const span = document.getElementsByClassName('close')[0];
+        const exportOptions = document.getElementById('exportOptions');
+        const exportPDFBtn = document.getElementById('exportPDF');
+        const generateExportBtn = document.getElementById('generateExport');
+        const shareViberBtn = document.getElementById('shareViber');
+
+        // Current item being edited
+        let currentEditItem = null;
+        let currentImageFile = null;
+        let currentPOItems = [];
+
+        // Firebase references
+        const itemsRef = database.ref('items');
+        const poRef = database.ref('currentPO');
+
+        // Image modal functionality
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        modal.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                if (tabId) {
+                    // Main tabs
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    document.querySelectorAll('.tabs .tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Refresh views when switching tabs
+                    if (tabId === 'browse') {
+                        const activeCategoryTab = document.querySelector('.category-tabs .active');
+                        const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                        loadItems(category);
+                    } else if (tabId === 'po') {
+                        loadPO();
+                    } else if (tabId === 'add') {
+                        loadItemsForEditing();
+                        resetForm();
+                    }
+                }
+            });
+        });
+
+        // Category tab switching
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                
+                document.querySelectorAll('.category-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                loadItems(category);
+            });
+        });
+
+        // Load items from Firebase
+        function loadItems(category = 'all') {
+            itemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
+            
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                displayItems(items, category);
+            }).catch(error => {
+                console.error('Error loading items:', error);
+                showNotification('Error loading items', true);
+            });
+        }
+
+        // Display items in list view
+        function displayItems(items, category = 'all') {
+            itemsContainer.innerHTML = '';
+            
+            let filteredItems = Object.values(items);
+            
+            // Filter by category if not 'all'
+            if (category !== 'all') {
+                filteredItems = filteredItems.filter(item => item.category === category);
+            }
+            
+            // Filter by search term if any
+            const searchTerm = searchItemsInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredItems = filteredItems.filter(item => 
+                    item.code.toLowerCase().includes(searchTerm) || 
+                    item.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filteredItems.length === 0) {
+                itemsContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i>🔍</i>
+                        <h3>No items found</h3>
+                        <p>Try a different search or category</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredItems.forEach(item => {
+                const itemRow = document.createElement('div');
+                itemRow.className = 'item-row';
+                itemRow.innerHTML = `
+                    <div class="item-image">
+                        <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
+                    </div>
+                    <div class="item-details">
+                        <div class="item-code">${item.code}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
+                    </div>
+                    <div class="item-actions">
+                        <input type="number" class="quantity-input" value="1" min="1">
+                        <button class="btn btn-primary btn-sm add-to-po" data-code="${item.code}">Add to PO</button>
+                    </div>
+                `;
+                itemsContainer.appendChild(itemRow);
+            });
+            
+            // Add event listeners to "Add to PO" buttons
+            document.querySelectorAll('.add-to-po').forEach(button => {
+                button.addEventListener('click', function() {
+                    const code = this.getAttribute('data-code');
+                    const item = filteredItems.find(i => i.code === code);
+                    const quantity = parseInt(this.parentElement.querySelector('.quantity-input').value) || 1;
+                    
+                    addToPO(item, quantity);
+                    showNotification('Item added to PO');
+                });
+            });
+
+            // Add click event to item images for preview
+            document.querySelectorAll('.item-image img').forEach(img => {
+                img.addEventListener('click', function() {
+                    modal.style.display = "block";
+                    modalImg.src = this.src;
+                });
+            });
+        }
+
+        // Load items for editing
+        function loadItemsForEditing() {
+            editItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
+            
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                
+                if (Object.keys(items).length === 0) {
+                    editItemsList.innerHTML = `
+                        <div class="empty-state">
+                            <i>📦</i>
+                            <h3>No items in inventory</h3>
+                            <p>Add your first item using the form above</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                editItemsList.innerHTML = '';
+                
+                Object.values(items).forEach(item => {
+                    const itemRow = document.createElement('div');
+                    itemRow.className = 'item-row';
+                    itemRow.innerHTML = `
+                        <div class="item-image">
+                            <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
+                        </div>
+                        <div class="item-details">
+                            <div class="item-code">${item.code}</div>
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary btn-sm edit-item" data-code="${item.code}">Edit</button>
+                            <button class="btn btn-danger btn-sm delete-item" data-code="${item.code}">Delete</button>
+                        </div>
+                    `;
+                    editItemsList.appendChild(itemRow);
+                });
+                
+                // Add event listeners to edit buttons
+                document.querySelectorAll('.edit-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const code = this.getAttribute('data-code');
+                        editItem(code);
+                    });
+                });
+                
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const code = this.getAttribute('data-code');
+                        deleteItem(code);
+                    });
+                });
+
+                // Add click event to item images for preview
+                document.querySelectorAll('.item-image img').forEach(img => {
+                    img.addEventListener('click', function() {
+                        modal.style.display = "block";
+                        modalImg.src = this.src;
+                    });
+                });
+            }).catch(error => {
+                console.error('Error loading items for editing:', error);
+                showNotification('Error loading items', true);
+            });
+        }
+
+        // Edit item
+        function editItem(code) {
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                const item = Object.values(items).find(i => i.code === code);
+                
+                if (!item) {
+                    showNotification('Item not found', true);
+                    return;
+                }
+                
+                currentEditItem = item;
+                
+                // Fill the form
+                document.getElementById('itemCode').value = item.code;
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('itemCategory').value = item.category;
+                document.getElementById('itemPrice').value = item.price || '';
+                
+                // Show image preview if exists
+                if (item.image) {
+                    imagePreview.src = item.image;
+                    imagePreview.style.display = 'block';
+                    imagePlaceholder.style.display = 'none';
+                } else {
+                    imagePreview.style.display = 'none';
+                    imagePlaceholder.style.display = 'block';
+                }
+                
+                // Change form title and buttons
+                formTitle.textContent = 'Edit Item';
+                deleteBtn.style.display = 'inline-block';
+                cancelEditBtn.style.display = 'inline-block';
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }).catch(error => {
+                console.error('Error loading item for editing:', error);
+                showNotification('Error loading item', true);
+            });
+        }
+
+        // Delete item
+        function deleteItem(code) {
+            if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) {
+                return;
+            }
+            
+            // Find the item key in Firebase
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || {};
+                let itemKey = null;
+                
+                for (const key in items) {
+                    if (items[key].code === code) {
+                        itemKey = key;
+                        break;
+                    }
+                }
+                
+                if (!itemKey) {
+                    showNotification('Item not found', true);
+                    return;
+                }
+                
+                // Remove from items
+                itemsRef.child(itemKey).remove()
+                    .then(() => {
+                        // Remove from current PO if exists
+                        poRef.once('value').then(poSnapshot => {
+                            const poItems = poSnapshot.val() || {};
+                            let poItemKey = null;
+                            
+                            for (const key in poItems) {
+                                if (poItems[key].code === code) {
+                                    poItemKey = key;
+                                    break;
+                                }
+                            }
+                            
+                            if (poItemKey) {
+                                poRef.child(poItemKey).remove();
+                            }
+                            
+                            loadItemsForEditing();
+                            
+                            if (currentEditItem && currentEditItem.code === code) {
+                                resetForm();
+                            }
+                            
+                            showNotification('Item deleted successfully');
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error deleting item:', error);
+                        showNotification('Error deleting item', true);
+                    });
+            });
+        }
+
+        // Cancel edit
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        // Reset form to add new item state
+        function resetForm() {
+            document.getElementById('itemCode').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemCategory').value = 'fiberglass';
+            document.getElementById('itemPrice').value = '';
+            
+            imagePreview.src = '';
+            imagePreview.style.display = 'none';
+            imagePlaceholder.style.display = 'block';
+            currentImageFile = null;
+            
+            formTitle.textContent = 'Add New Item';
+            deleteBtn.style.display = 'none';
+            cancelEditBtn.style.display = 'none';
+            
+            currentEditItem = null;
+        }
+
+        // Image upload handling
+        imageUpload.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                showNotification('Please select an image file', true);
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                imagePreview.src = event.target.result;
+                imagePreview.style.display = 'block';
+                imagePlaceholder.style.display = 'none';
+                currentImageFile = file;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Drag and drop for image
+        imageUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUpload.style.borderColor = 'var(--secondary-color)';
+        });
+
+        imageUpload.addEventListener('dragleave', () => {
+            imageUpload.style.borderColor = '#ddd';
+        });
+
+        imageUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUpload.style.borderColor = '#ddd';
+            
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                showNotification('Please drop an image file', true);
+                return;
+            }
+            
+            fileInput.files = e.dataTransfer.files;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                imagePreview.src = event.target.result;
+                imagePreview.style.display = 'block';
+                imagePlaceholder.style.display = 'none';
+                currentImageFile = file;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Add item to PO
+        function addToPO(item, quantity = 1) {
+            poRef.once('value').then(snapshot => {
+                const poItems = snapshot.val() || {};
+                let existingItemKey = null;
+                
+                // Check if item already exists in PO
+                for (const key in poItems) {
+                    if (poItems[key].code === item.code) {
+                        existingItemKey = key;
+                        break;
+                    }
+                }
+                
+                if (existingItemKey) {
+                    // Update quantity of existing item
+                    const newQuantity = poItems[existingItemKey].quantity + quantity;
+                    poRef.child(existingItemKey).update({ quantity: newQuantity })
+                        .then(() => {
+                            showNotification('Item quantity updated in PO');
+                            updatePOView();
+                        })
+                        .catch(error => {
+                            console.error('Error updating PO item:', error);
+                            showNotification('Error updating PO', true);
+                        });
+                } else {
+                    // Add new item to PO
+                    const newItem = {
+                        ...item,
+                        quantity: quantity
+                    };
+                    
+                    poRef.push(newItem)
+                        .then(() => {
+                            showNotification('Item added to PO');
+                            updatePOView();
+                        })
+                        .catch(error => {
+                            console.error('Error adding to PO:', error);
+                            showNotification('Error adding to PO', true);
+                        });
+                }
+            });
+        }
+
+        // Load PO from Firebase
+        function loadPO() {
+            poItemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading purchase order...</p></div>';
+            
+            poRef.on('value', snapshot => {
+                currentPOItems = snapshot.val() || [];
+                updatePOView(currentPOItems);
+            }, error => {
+                console.error('Error loading PO:', error);
+                showNotification('Error loading purchase order', true);
+            });
+        }
+
+        // Update PO view
+        function updatePOView(poItems = null) {
+            if (!poItems) {
+                // If poItems not provided, get from Firebase
+                poRef.once('value').then(snapshot => {
+                    currentPOItems = snapshot.val() || [];
+                    updatePOView(currentPOItems);
+                });
+                return;
+            }
+            
+            if (Object.keys(poItems).length === 0) {
+                poItemsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i>📦</i>
+                        <h3>Your PO is empty</h3>
+                        <p>Add items from the Browse tab to create a purchase order</p>
+                    </div>
+                `;
+                poSummary.style.display = 'none';
+                exportOptions.classList.remove('active');
+                return;
+            }
+            
+            poItemsContainer.innerHTML = '';
+            poSummary.style.display = 'block';
+            exportOptions.classList.add('active');
+            
+            let totalItems = 0;
+            let totalAmount = 0;
+            
+            Object.values(poItems).forEach((item, index) => {
+                totalItems += item.quantity;
+                totalAmount += (item.price || 0) * item.quantity;
+                
+                const poItem = document.createElement('div');
+                poItem.className = 'po-item';
+                poItem.innerHTML = `
+                    <div class="po-item-details">
+                        <div class="po-item-name">${item.name}</div>
+                        <div class="po-item-code">${item.code} | ${CURRENCY} ${item.price?.toFixed(2) || '0.00'} each</div>
+                    </div>
+                    <div>
+                        <input type="number" class="po-qty-input" value="${item.quantity}" min="1" data-key="${Object.keys(poItems)[index]}">
+                    </div>
+                    <div style="font-weight: 600; color: var(--secondary-color);">
+                        ${CURRENCY} ${((item.price || 0) * item.quantity).toFixed(2)}
+                    </div>
+                    <button class="btn btn-danger remove-from-po" data-code="${item.code}">×</button>
+                `;
+                poItemsContainer.appendChild(poItem);
+            });
+            
+            // Update summary
+            document.getElementById('totalItems').textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+            document.getElementById('totalAmount').textContent = `${CURRENCY} ${totalAmount.toFixed(2)}`;
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-from-po').forEach(button => {
+                button.addEventListener('click', function() {
+                    const code = this.getAttribute('data-code');
+                    removeFromPO(code);
+                });
+            });
+
+            // Add event listeners to quantity inputs
+            document.querySelectorAll('.po-qty-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const newQty = parseInt(this.value) || 1;
+                    const itemKey = this.getAttribute('data-key');
+                    
+                    poRef.child(itemKey).update({ quantity: newQty })
+                        .then(() => {
+                            showNotification('Quantity updated');
+                        })
+                        .catch(error => {
+                            console.error('Error updating quantity:', error);
+                            showNotification('Error updating quantity', true);
+                        });
+                });
+            });
+        }
+
+        // Remove item from PO
+        function removeFromPO(code) {
+            poRef.once('value').then(snapshot => {
+                const poItems = snapshot.val() || {};
+                let itemKey = null;
+                
+                for (const key in poItems) {
+                    if (poItems[key].code === code) {
+                        itemKey = key;
+                        break;
+                    }
+                }
+                
+                if (itemKey) {
+                    poRef.child(itemKey).remove()
+                        .then(() => {
+                            showNotification('Item removed from PO');
+                        })
+                        .catch(error => {
+                            console.error('Error removing from PO:', error);
+                            showNotification('Error removing item', true);
+                        });
+                }
+            });
+        }
+
+        // Clear PO
+        document.getElementById('clearPO').addEventListener('click', function() {
+            poRef.once('value').then(snapshot => {
+                if (!snapshot.val() || Object.keys(snapshot.val()).length === 0) {
+                    showNotification('PO is already empty', true);
+                    return;
+                }
+                
+                if (confirm('Are you sure you want to clear the entire PO?')) {
+                    poRef.remove()
+                        .then(() => {
+                            showNotification('PO cleared successfully');
+                        })
+                        .catch(error => {
+                            console.error('Error clearing PO:', error);
+                            showNotification('Error clearing PO', true);
+                        });
+                }
+            });
+        });
+
+        // Print PO
+        document.getElementById('printPO').addEventListener('click', function() {
+            poRef.once('value').then(snapshot => {
+                const poItems = snapshot.val() || [];
+                
+                if (Object.keys(poItems).length === 0) {
+                    showNotification('PO is empty. Add items first.', true);
+                    return;
+                }
+                
+                // Create printable content
+                const printContent = generatePOContent(poItems);
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Purchase Order</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            h1 { color: #2c3e50; text-align: center; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .total { font-weight: bold; text-align: right; }
+                            .header { margin-bottom: 30px; }
+                            .footer { margin-top: 30px; text-align: right; }
+                            .checkbox { width: 20px; height: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>PURCHASE ORDER</h1>
+                            <p>Date: ${new Date().toLocaleDateString()}</p>
+                        </div>
+                        ${printContent}
+                        <div class="footer">
+                            <p>_________________________</p>
+                            <p>Authorized Signature</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            });
+        });
+
+        // Export as PDF
+        exportPDFBtn.addEventListener('click', function() {
+            poRef.once('value').then(snapshot => {
+                const poItems = snapshot.val() || [];
+                
+                if (Object.keys(poItems).length === 0) {
+                    showNotification('PO is empty. Add items first.', true);
+                    return;
+                }
+                
+                // Create a new jsPDF instance
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(18);
+                doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
+                
+                // Add date
+                doc.setFontSize(12);
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
+                
+                // Create table data
+                const tableData = [];
+                let totalAmount = 0;
+                
+                Object.values(poItems).forEach(item => {
+                    const itemTotal = (item.price || 0) * item.quantity;
+                    totalAmount += itemTotal;
+                    
+                    tableData.push([
+                        { content: '', styles: { cellWidth: 10 } },
+                        item.code,
+                        item.name,
+                        { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
+                        { content: item.quantity.toString(), styles: { halign: 'center' } },
+                        { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
+                    ]);
+                });
+                
+                // Add total row
+                tableData.push([
+                    { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
+                ]);
+                
+                // AutoTable options
+                const options = {
+                    startY: 30,
+                    head: [
+                        [
+                            { content: '✔', styles: { cellWidth: 10 } },
+                            'Code',
+                            'Description',
+                            { content: 'Unit Price', styles: { halign: 'right' } },
+                            { content: 'Qty', styles: { halign: 'center' } },
+                            { content: 'Total', styles: { halign: 'right' } }
+                        ]
+                    ],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [44, 62, 80], // Dark blue color
+                        textColor: 255, // White text
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 10 }, // Checkbox column
+                        1: { cellWidth: 30 }, // Code column
+                        2: { cellWidth: 'auto' }, // Description column
+                        3: { cellWidth: 30 }, // Unit price column
+                        4: { cellWidth: 20 }, // Qty column
+                        5: { cellWidth: 30 } // Total column
+                    },
+                    didDrawCell: function(data) {
+                        // Draw checkboxes in the first column (except header and total row)
+                        if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
+                            doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+                        }
+                    }
+                };
+                
+                // Generate the table
+                doc.autoTable(options);
+                
+                // Add signature line
+                doc.setFontSize(12);
+                doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
+                doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
+                
+                // Save the PDF
+                doc.save(`PurchaseOrder_${new Date().toISOString().slice(0,10)}.pdf`);
+                showNotification('PO exported as PDF');
+            });
+        });
+
+        // Generate Export based on selected options
+        generateExportBtn.addEventListener('click', function() {
+            const includeCode = document.getElementById('exportCode').checked;
+            const includeName = document.getElementById('exportName').checked;
+            const includeQty = document.getElementById('exportQty').checked;
+            const includePrice = document.getElementById('exportPrice').checked;
+            const includeTotal = document.getElementById('exportTotal').checked;
+            
+            if (!includeCode && !includeName && !includeQty && !includePrice && !includeTotal) {
+                showNotification('Please select at least one export option', true);
+                return;
+            }
+            
+            // Create a new jsPDF instance
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(18);
+            doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
+            
+            // Add date
+            doc.setFontSize(12);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
+            
+            // Create table data
+            const tableData = [];
+            let totalAmount = 0;
+            
+            Object.values(currentPOItems).forEach(item => {
+                const itemTotal = (item.price || 0) * item.quantity;
+                totalAmount += itemTotal;
+                
+                const rowData = [];
+                
+                // Add checkbox
+                rowData.push({ content: '', styles: { cellWidth: 10 } });
+                
+                // Add selected columns
+                if (includeCode) rowData.push(item.code);
+                if (includeName) rowData.push(item.name);
+                if (includePrice) rowData.push({ content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } });
+                if (includeQty) rowData.push({ content: item.quantity.toString(), styles: { halign: 'center' } });
+                if (includeTotal) rowData.push({ content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } });
+                
+                tableData.push(rowData);
+            });
+            
+            // Add total row if total is included
+            if (includeTotal) {
+                const totalRow = [];
+                totalRow.push({ content: '', colSpan: 1, styles: { cellWidth: 10 } });
+                
+                // Calculate colspan based on selected columns
+                let colspan = 0;
+                if (includeCode) colspan++;
+                if (includeName) colspan++;
+                if (includePrice) colspan++;
+                if (includeQty) colspan++;
+                
+                totalRow.push({ content: 'Total:', colSpan: colspan, styles: { halign: 'right', fontStyle: 'bold' } });
+                totalRow.push({ content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } });
+                
+                tableData.push(totalRow);
+            }
+            
+            // Prepare headers
+            const headers = [];
+            headers.push({ content: '✔', styles: { cellWidth: 10 } });
+            if (includeCode) headers.push('Code');
+            if (includeName) headers.push('Description');
+            if (includePrice) headers.push({ content: 'Unit Price', styles: { halign: 'right' } });
+            if (includeQty) headers.push({ content: 'Qty', styles: { halign: 'center' } });
+            if (includeTotal) headers.push({ content: 'Total', styles: { halign: 'right' } });
+            
+            // AutoTable options
+            const options = {
+                startY: 30,
+                head: [headers],
+                body: tableData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [44, 62, 80], // Dark blue color
+                    textColor: 255, // White text
+                    fontStyle: 'bold'
+                },
+                didDrawCell: function(data) {
+                    // Draw checkboxes in the first column (except header and total row)
+                    if (data.column.index === 0 && data.row.index > 0 && 
+                        (includeTotal ? data.row.index < tableData.length - 1 : true)) {
+                        doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+                    }
+                }
+            };
+            
+            // Generate the table
+            doc.autoTable(options);
+            
+            // Add signature line
+            doc.setFontSize(12);
+            doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
+            doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
+            
+            // Save the PDF
+            const fileName = `PO_Export_${new Date().toISOString().slice(0,10)}.pdf`;
+            doc.save(fileName);
+            showNotification('Custom export generated');
+            
+            // Return the PDF data for sharing
+            return doc.output('datauristring');
+        });
+
+        // Share via Viber with PDF attachment
+        shareViberBtn.addEventListener('click', async function() {
+            poRef.once('value').then(async snapshot => {
+                const poItems = snapshot.val() || [];
+                
+                if (Object.keys(poItems).length === 0) {
+                    showNotification('PO is empty. Add items first.', true);
+                    return;
+                }
+                
+                // First generate the PDF
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(18);
+                doc.text('PURCHASE ORDER', 105, 15, { align: 'center' });
+                
+                // Add date
+                doc.setFontSize(12);
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 25);
+                
+                // Create table data
+                const tableData = [];
+                let totalAmount = 0;
+                
+                Object.values(poItems).forEach(item => {
+                    const itemTotal = (item.price || 0) * item.quantity;
+                    totalAmount += itemTotal;
+                    
+                    tableData.push([
+                        { content: '', styles: { cellWidth: 10 } },
+                        item.code,
+                        item.name,
+                        { content: `${CURRENCY} ${item.price?.toFixed(2) || '0.00'}`, styles: { halign: 'right' } },
+                        { content: item.quantity.toString(), styles: { halign: 'center' } },
+                        { content: `${CURRENCY} ${itemTotal.toFixed(2)}`, styles: { halign: 'right' } }
+                    ]);
+                });
+                
+                // Add total row
+                tableData.push([
+                    { content: '', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: `${CURRENCY} ${totalAmount.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
+                ]);
+                
+                // AutoTable options
+                const options = {
+                    startY: 30,
+                    head: [
+                        [
+                            { content: '✔', styles: { cellWidth: 10 } },
+                            'Code',
+                            'Description',
+                            { content: 'Unit Price', styles: { halign: 'right' } },
+                            { content: 'Qty', styles: { halign: 'center' } },
+                            { content: 'Total', styles: { halign: 'right' } }
+                        ]
+                    ],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [44, 62, 80],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 'auto' },
+                        3: { cellWidth: 30 },
+                        4: { cellWidth: 20 },
+                        5: { cellWidth: 30 }
+                    },
+                    didDrawCell: function(data) {
+                        if (data.column.index === 0 && data.row.index > 0 && data.row.index < tableData.length - 1) {
+                            doc.rect(data.cell.x + 3, data.cell.y + 2, 10, 10);
+                        }
+                    }
+                };
+                
+                // Generate the table
+                doc.autoTable(options);
+                
+                // Add signature line
+                doc.setFontSize(12);
+                doc.text('Authorized Signature:', 14, doc.lastAutoTable.finalY + 20);
+                doc.line(50, doc.lastAutoTable.finalY + 25, 100, doc.lastAutoTable.finalY + 25);
+                
+                // Get PDF as base64
+                const pdfBase64 = doc.output('datauristring');
+                
+                // Create PO text for sharing
+                let poText = 'Purchase Order Request%0A%0A';
+                poText += 'Items:%0A';
+                
+                Object.values(poItems).forEach(item => {
+                    const itemTotal = (item.price || 0) * item.quantity;
+                    poText += `- ${item.code} ${item.name} (Qty: ${item.quantity}) - ${CURRENCY} ${itemTotal.toFixed(2)}%0A`;
+                });
+                
+                poText += `%0ATotal Amount: ${CURRENCY} ${totalAmount.toFixed(2)}%0A`;
+                poText += 'Please see attached PDF for details.%0A';
+                poText += 'Please process this order. Thank you!';
+                
+                // For Viber web, we can't directly share files, so we'll share the text with a download link
+                // In a mobile app, you would use the Viber SDK to share the file
+                const fileName = `PO_${new Date().toISOString().slice(0,10)}.pdf`;
+                const downloadLink = `data:application/pdf;base64,${pdfBase64.split(',')[1]}`;
+                
+                // Open Viber share link with download instructions
+                window.open(`viber://forward?text=${encodeURIComponent(poText + '%0A%0ADownload PO: ' + downloadLink)}`, '_blank');
+                
+                showNotification('PO shared via Viber with download link');
+            });
+        });
+
+        // Save item (add or update)
+        document.getElementById('saveItem').addEventListener('click', function() {
+            const code = document.getElementById('itemCode').value.trim();
+            const name = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('itemCategory').value;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            
+            if (!code || !name) {
+                showNotification('Item code and name are required', true);
+                return;
+            }
+            
+            // Check if we're editing or adding new
+            if (currentEditItem) {
+                // Editing existing item
+                if (code !== currentEditItem.code) {
+                    // Check if new code already exists
+                    itemsRef.once('value').then(snapshot => {
+                        const items = snapshot.val() || {};
+                        const codeExists = Object.values(items).some(item => item.code === code);
+                        
+                        if (codeExists) {
+                            showNotification('Item with this code already exists', true);
+                            return;
+                        }
+                        
+                        // Proceed with update
+                        updateItemInFirebase(code, name, category, price);
+                    });
+                } else {
+                    // Code hasn't changed, proceed with update
+                    updateItemInFirebase(code, name, category, price);
+                }
+            } else {
+                // Adding new item - check if code exists
+                itemsRef.once('value').then(snapshot => {
+                    const items = snapshot.val() || {};
+                    const codeExists = Object.values(items).some(item => item.code === code);
+                    
+                    if (codeExists) {
+                        showNotification('Item with this code already exists', true);
+                        return;
+                    }
+                    
+                    // Add new item
+                    addItemToFirebase(code, name, category, price);
+                });
+            }
+        });
+
+        // Update item in Firebase
+        function updateItemInFirebase(code, name, category, price) {
+            // Find the item key in Firebase
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || {};
+                let itemKey = null;
+                
+                for (const key in items) {
+                    if (items[key].code === currentEditItem.code) {
+                        itemKey = key;
+                        break;
+                    }
+                }
+                
+                if (!itemKey) {
+                    showNotification('Item not found', true);
+                    return;
+                }
+                
+                // Prepare updated item data
+                const updatedItem = {
+                    code,
+                    name,
+                    category,
+                    price
+                };
+                
+                // Update image if changed
+                if (currentImageFile) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        updatedItem.image = event.target.result;
+                        
+                        // Update the item in Firebase
+                        itemsRef.child(itemKey).update(updatedItem)
+                            .then(() => {
+                                // Update PO if this item is there
+                                poRef.once('value').then(poSnapshot => {
+                                    const poItems = poSnapshot.val() || {};
+                                    
+                                    for (const key in poItems) {
+                                        if (poItems[key].code === currentEditItem.code) {
+                                            poRef.child(key).update({
+                                                code: code,
+                                                name: name,
+                                                category: category,
+                                                price: price,
+                                                image: updatedItem.image
+                                            });
+                                        }
+                                    }
+                                    
+                                    showNotification('Item updated successfully');
+                                    resetForm();
+                                    loadItemsForEditing();
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error updating item:', error);
+                                showNotification('Error updating item', true);
+                            });
+                    };
+                    reader.readAsDataURL(currentImageFile);
+                } else {
+                    // Update without changing image
+                    itemsRef.child(itemKey).update(updatedItem)
+                        .then(() => {
+                            // Update PO if this item is there
+                            poRef.once('value').then(poSnapshot => {
+                                const poItems = poSnapshot.val() || {};
+                                
+                                for (const key in poItems) {
+                                    if (poItems[key].code === currentEditItem.code) {
+                                        poRef.child(key).update({
+                                            code: code,
+                                            name: name,
+                                            category: category,
+                                            price: price
+                                        });
+                                    }
+                                }
+                                
+                                showNotification('Item updated successfully');
+                                resetForm();
+                                loadItemsForEditing();
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error updating item:', error);
+                            showNotification('Error updating item', true);
+                        });
+                }
+            });
+        }
+
+        // Add new item to Firebase
+        function addItemToFirebase(code, name, category, price) {
+            // Create new item
+            const newItem = {
+                code,
+                name,
+                category,
+                price
+            };
+            
+            // Add image if provided
+            if (currentImageFile) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    newItem.image = event.target.result;
+                    
+                    // Add the item to Firebase
+                    itemsRef.push(newItem)
+                        .then(() => {
+                            showNotification('Item added successfully');
+                            resetForm();
+                            loadItemsForEditing();
+                        })
+                        .catch(error => {
+                            console.error('Error adding item:', error);
+                            showNotification('Error adding item', true);
+                        });
+                };
+                reader.readAsDataURL(currentImageFile);
+            } else {
+                // Add without image
+                itemsRef.push(newItem)
+                    .then(() => {
+                        showNotification('Item added successfully');
+                        resetForm();
+                        loadItemsForEditing();
+                    })
+                    .catch(error => {
+                        console.error('Error adding item:', error);
+                        showNotification('Error adding item', true);
+                    });
+            }
+        }
+
+        // Delete item button
+        deleteBtn.addEventListener('click', function() {
+            if (currentEditItem) {
+                deleteItem(currentEditItem.code);
+            }
+        });
+
+        // Clear search
+        clearSearchBtn.addEventListener('click', function() {
+            searchItemsInput.value = '';
+            const activeCategoryTab = document.querySelector('.category-tabs .active');
+            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+            loadItems(category);
+        });
+
+        // Search functionality
+        searchItemsInput.addEventListener('input', function() {
+            const activeCategoryTab = document.querySelector('.category-tabs .active');
+            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+            loadItems(category);
+        });
+
+        // Show notification
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = `notification ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Generate PO content for printing/export
+        function generatePOContent(poItems) {
+            let content = '<table>';
+            content += `
+                <thead>
+                    <tr>
+                        <th style="width: 20px;">✔</th>
+                        <th>Item Code</th>
+                        <th>Description</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            let grandTotal = 0;
+            
+            Object.values(poItems).forEach(item => {
+                const total = (item.price || 0) * item.quantity;
+                grandTotal += total;
+                
+                content += `
+                    <tr>
+                        <td style="text-align: center;"><input type="checkbox" class="checkbox"></td>
+                        <td>${item.code}</td>
+                        <td>${item.name}</td>
+                        <td>${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</td>
+                        <td>${item.quantity}</td>
+                        <td>${CURRENCY} ${total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            content += `
+                    <tr>
+                        <td colspan="5" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                        <td style="font-weight: bold;">${CURRENCY} ${grandTotal.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+            `;
+            
+            return content;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial data
+            const activeCategoryTab = document.querySelector('.category-tabs .active');
+            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+            loadItems(category);
+            loadPO();
+        });
+    </script>
 </body>
 </html>
