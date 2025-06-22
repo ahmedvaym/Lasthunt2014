@@ -64,6 +64,9 @@
             display: flex;
             background-color: var(--light-color);
             border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .tab {
@@ -104,6 +107,11 @@
             margin-bottom: 25px;
             display: flex;
             gap: 10px;
+            position: sticky;
+            top: 60px;
+            background: white;
+            padding: 10px 0;
+            z-index: 90;
         }
 
         .search-box {
@@ -126,6 +134,11 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
+            position: sticky;
+            top: 120px;
+            background: white;
+            padding: 10px 0;
+            z-index: 80;
         }
 
         .category-tab {
@@ -144,6 +157,12 @@
         .category-tab.active {
             background-color: var(--secondary-color);
             color: white;
+        }
+
+        .items-container {
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+            margin-top: 10px;
         }
 
         .items-list {
@@ -217,6 +236,12 @@
             font-size: 0.9rem;
         }
 
+        .item-stock {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+
         .item-actions {
             display: flex;
             align-items: center;
@@ -281,6 +306,15 @@
 
         .btn-warning:hover {
             background-color: #d35400;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #138496;
         }
 
         .form-group {
@@ -383,6 +417,11 @@
             justify-content: flex-end;
             gap: 10px;
             margin-top: 20px;
+            position: sticky;
+            bottom: 20px;
+            background: white;
+            padding: 15px 0;
+            z-index: 90;
         }
 
         .empty-state {
@@ -423,6 +462,11 @@
             display: flex;
             gap: 10px;
             margin-top: 20px;
+            position: sticky;
+            bottom: 20px;
+            background: white;
+            padding: 15px 0;
+            z-index: 90;
         }
 
         .loading {
@@ -511,6 +555,117 @@
             gap: 5px;
         }
 
+        /* Stock view */
+        .stock-view {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .stock-view.active {
+            display: block;
+        }
+
+        .stock-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stock-item-row {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+
+        .stock-item-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stock-item-image {
+            width: 60px;
+            height: 60px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .stock-item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .stock-item-details {
+            flex: 1;
+            padding: 0 15px;
+            min-width: 0;
+        }
+
+        .stock-item-code {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stock-item-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+        }
+
+        .stock-item-stock {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .stock-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .stock-input {
+            width: 80px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        /* Total items counter */
+        .total-items-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 100;
+            font-weight: 600;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -552,6 +707,12 @@
             .export-checkboxes {
                 grid-template-columns: 1fr;
             }
+
+            .total-items-counter {
+                bottom: 80px;
+                left: 10px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -566,6 +727,7 @@
             <div class="tab active" data-tab="browse">Browse Items</div>
             <div class="tab" data-tab="add">Add/Edit Items</div>
             <div class="tab" data-tab="po">Purchase Orders</div>
+            <div class="tab" data-tab="stock">Stock Management</div>
         </div>
         
         <!-- Browse Items Tab -->
@@ -587,11 +749,13 @@
                 <div class="category-tab" data-category="general">General Items</div>
             </div>
             
-            <div class="items-list" id="itemsContainer">
-                <!-- Items will be loaded here as a list -->
-                <div class="empty-state">
-                    <div class="loading"></div>
-                    <p>Loading items...</p>
+            <div class="items-container">
+                <div class="items-list" id="itemsContainer">
+                    <!-- Items will be loaded here as a list -->
+                    <div class="empty-state">
+                        <div class="loading"></div>
+                        <p>Loading items...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -631,6 +795,10 @@
             <div class="form-group">
                 <label for="itemPrice" class="form-label">Unit Price (MVR)</label>
                 <input type="number" class="form-control" id="itemPrice" placeholder="Enter price per unit" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="itemStock" class="form-label">Current Stock</label>
+                <input type="number" class="form-control" id="itemStock" placeholder="Enter current stock quantity" min="0">
             </div>
             
             <div class="edit-actions">
@@ -710,6 +878,37 @@
                 </div>
             </div>
         </div>
+
+        <!-- Stock Management Tab -->
+        <div class="tab-content" id="stock">
+            <h2>Stock Management</h2>
+            
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="Search stock items..." id="searchStock">
+                <button class="btn btn-primary" id="clearStockSearch">Clear</button>
+            </div>
+            
+            <div class="category-tabs">
+                <div class="category-tab active" data-category="all">All Items</div>
+                <div class="category-tab" data-category="low">Low Stock</div>
+                <div class="category-tab" data-category="out">Out of Stock</div>
+            </div>
+            
+            <div class="stock-view active" id="stockView">
+                <div class="stock-items-list" id="stockItemsList">
+                    <!-- Stock items will be loaded here -->
+                    <div class="empty-state">
+                        <div class="loading"></div>
+                        <p>Loading stock items...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Items Counter -->
+    <div class="total-items-counter" id="totalItemsCounter" style="display: none;">
+        Total Items: <span id="totalItemsCount">0</span>
     </div>
 
     <!-- Image Preview Modal -->
@@ -743,6 +942,7 @@
         // Constants
         const DEFAULT_IMAGE = 'https://via.placeholder.com/300?text=No+Image';
         const CURRENCY = 'MVR';
+        const LOW_STOCK_THRESHOLD = 5; // Items with stock below this are considered low
         
         // DOM elements
         const itemsContainer = document.getElementById('itemsContainer');
@@ -766,11 +966,17 @@
         const exportPDFBtn = document.getElementById('exportPDF');
         const generateExportBtn = document.getElementById('generateExport');
         const shareViberBtn = document.getElementById('shareViber');
+        const totalItemsCounter = document.getElementById('totalItemsCounter');
+        const totalItemsCount = document.getElementById('totalItemsCount');
+        const stockItemsList = document.getElementById('stockItemsList');
+        const searchStockInput = document.getElementById('searchStock');
+        const clearStockSearchBtn = document.getElementById('clearStockSearch');
 
         // Current item being edited
         let currentEditItem = null;
         let currentImageFile = null;
         let currentPOItems = [];
+        let allItems = [];
 
         // Firebase references
         const itemsRef = database.ref('items');
@@ -814,22 +1020,38 @@
                     } else if (tabId === 'add') {
                         loadItemsForEditing();
                         resetForm();
+                    } else if (tabId === 'stock') {
+                        loadStockItems();
                     }
                 }
             });
         });
 
-        // Category tab switching
-        document.querySelectorAll('.category-tab').forEach(tab => {
+        // Category tab switching (Browse tab)
+        document.querySelectorAll('#browse .category-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 const category = this.getAttribute('data-category');
                 
-                document.querySelectorAll('.category-tab').forEach(t => {
+                document.querySelectorAll('#browse .category-tab').forEach(t => {
                     t.classList.remove('active');
                 });
                 this.classList.add('active');
                 
                 loadItems(category);
+            });
+        });
+
+        // Category tab switching (Stock tab)
+        document.querySelectorAll('#stock .category-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                
+                document.querySelectorAll('#stock .category-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                loadStockItems(category);
             });
         });
 
@@ -839,11 +1061,25 @@
             
             itemsRef.once('value').then(snapshot => {
                 const items = snapshot.val() || [];
+                allItems = items; // Store all items for stock management
                 displayItems(items, category);
+                updateTotalItemsCount(items);
             }).catch(error => {
                 console.error('Error loading items:', error);
                 showNotification('Error loading items', true);
             });
+        }
+
+        // Update total items counter
+        function updateTotalItemsCount(items) {
+            const itemCount = Object.keys(items).length;
+            totalItemsCount.textContent = itemCount;
+            
+            if (itemCount > 0) {
+                totalItemsCounter.style.display = 'block';
+            } else {
+                totalItemsCounter.style.display = 'none';
+            }
         }
 
         // Display items in list view
@@ -888,6 +1124,7 @@
                         <div class="item-code">${item.code}</div>
                         <div class="item-name">${item.name}</div>
                         <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
+                        <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
                     </div>
                     <div class="item-actions">
                         <input type="number" class="quantity-input" value="1" min="1">
@@ -915,6 +1152,162 @@
                     modal.style.display = "block";
                     modalImg.src = this.src;
                 });
+            });
+        }
+
+        // Load stock items
+        function loadStockItems(category = 'all') {
+            stockItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading stock items...</p></div>';
+            
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                allItems = items; // Store all items for stock management
+                displayStockItems(items, category);
+            }).catch(error => {
+                console.error('Error loading stock items:', error);
+                showNotification('Error loading stock items', true);
+            });
+        }
+
+        // Display stock items
+        function displayStockItems(items, category = 'all') {
+            stockItemsList.innerHTML = '';
+            
+            let filteredItems = Object.values(items);
+            
+            // Filter by search term if any
+            const searchTerm = searchStockInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredItems = filteredItems.filter(item => 
+                    item.code.toLowerCase().includes(searchTerm) || 
+                    item.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Filter by stock status
+            if (category === 'low') {
+                filteredItems = filteredItems.filter(item => 
+                    item.stock !== undefined && item.stock > 0 && item.stock <= LOW_STOCK_THRESHOLD
+                );
+            } else if (category === 'out') {
+                filteredItems = filteredItems.filter(item => 
+                    item.stock !== undefined && item.stock <= 0
+                );
+            }
+            
+            if (filteredItems.length === 0) {
+                stockItemsList.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i>📦</i>
+                        <h3>No items found</h3>
+                        <p>${category === 'all' ? 'No items in inventory' : 
+                           category === 'low' ? 'No low stock items' : 'No out of stock items'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by stock level (lowest first)
+            filteredItems.sort((a, b) => {
+                const stockA = a.stock !== undefined ? a.stock : Infinity;
+                const stockB = b.stock !== undefined ? b.stock : Infinity;
+                return stockA - stockB;
+            });
+            
+            filteredItems.forEach(item => {
+                const stockItemRow = document.createElement('div');
+                stockItemRow.className = 'stock-item-row';
+                
+                // Determine stock status color
+                let stockStatus = 'N/A';
+                let stockColor = '#7f8c8d';
+                
+                if (item.stock !== undefined) {
+                    if (item.stock <= 0) {
+                        stockStatus = 'Out of Stock';
+                        stockColor = '#e74c3c';
+                    } else if (item.stock <= LOW_STOCK_THRESHOLD) {
+                        stockStatus = `Low Stock (${item.stock})`;
+                        stockColor = '#f39c12';
+                    } else {
+                        stockStatus = `In Stock (${item.stock})`;
+                        stockColor = '#27ae60';
+                    }
+                }
+                
+                stockItemRow.innerHTML = `
+                    <div class="stock-item-image">
+                        <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
+                    </div>
+                    <div class="stock-item-details">
+                        <div class="stock-item-code">${item.code}</div>
+                        <div class="stock-item-name">${item.name}</div>
+                        <div class="stock-item-stock" style="color: ${stockColor}">${stockStatus}</div>
+                    </div>
+                    <div class="stock-item-actions">
+                        <input type="number" class="stock-input" value="${item.stock !== undefined ? item.stock : ''}" placeholder="Stock" min="0">
+                        <button class="btn btn-primary btn-sm update-stock" data-code="${item.code}">Update</button>
+                    </div>
+                `;
+                stockItemsList.appendChild(stockItemRow);
+            });
+            
+            // Add event listeners to update stock buttons
+            document.querySelectorAll('.update-stock').forEach(button => {
+                button.addEventListener('click', function() {
+                    const code = this.getAttribute('data-code');
+                    const stockInput = this.parentElement.querySelector('.stock-input');
+                    const newStock = parseInt(stockInput.value) || 0;
+                    
+                    updateStock(code, newStock);
+                });
+            });
+
+            // Add click event to item images for preview
+            document.querySelectorAll('.stock-item-image img').forEach(img => {
+                img.addEventListener('click', function() {
+                    modal.style.display = "block";
+                    modalImg.src = this.src;
+                });
+            });
+        }
+
+        // Update stock for an item
+        function updateStock(code, newStock) {
+            // Find the item key in Firebase
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || {};
+                let itemKey = null;
+                
+                for (const key in items) {
+                    if (items[key].code === code) {
+                        itemKey = key;
+                        break;
+                    }
+                }
+                
+                if (!itemKey) {
+                    showNotification('Item not found', true);
+                    return;
+                }
+                
+                // Update the stock
+                itemsRef.child(itemKey).update({ stock: newStock })
+                    .then(() => {
+                        showNotification('Stock updated successfully');
+                        
+                        // Reload stock items
+                        const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+                        const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                        loadStockItems(category);
+                        
+                        // Update the item in allItems
+                        allItems[itemKey].stock = newStock;
+                    })
+                    .catch(error => {
+                        console.error('Error updating stock:', error);
+                        showNotification('Error updating stock', true);
+                    });
             });
         }
 
@@ -949,6 +1342,7 @@
                             <div class="item-code">${item.code}</div>
                             <div class="item-name">${item.name}</div>
                             <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
+                            <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
                         </div>
                         <div class="item-actions">
                             <button class="btn btn-primary btn-sm edit-item" data-code="${item.code}">Edit</button>
@@ -1005,6 +1399,7 @@
                 document.getElementById('itemName').value = item.name;
                 document.getElementById('itemCategory').value = item.category;
                 document.getElementById('itemPrice').value = item.price || '';
+                document.getElementById('itemStock').value = item.stock !== undefined ? item.stock : '';
                 
                 // Show image preview if exists
                 if (item.image) {
@@ -1072,6 +1467,7 @@
                             }
                             
                             loadItemsForEditing();
+                            loadStockItems();
                             
                             if (currentEditItem && currentEditItem.code === code) {
                                 resetForm();
@@ -1096,6 +1492,7 @@
             document.getElementById('itemName').value = '';
             document.getElementById('itemCategory').value = 'fiberglass';
             document.getElementById('itemPrice').value = '';
+            document.getElementById('itemStock').value = '';
             
             imagePreview.src = '';
             imagePreview.style.display = 'none';
@@ -1733,6 +2130,7 @@
             const name = document.getElementById('itemName').value.trim();
             const category = document.getElementById('itemCategory').value;
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            const stock = parseInt(document.getElementById('itemStock').value) || 0;
             
             if (!code || !name) {
                 showNotification('Item code and name are required', true);
@@ -1754,11 +2152,11 @@
                         }
                         
                         // Proceed with update
-                        updateItemInFirebase(code, name, category, price);
+                        updateItemInFirebase(code, name, category, price, stock);
                     });
                 } else {
                     // Code hasn't changed, proceed with update
-                    updateItemInFirebase(code, name, category, price);
+                    updateItemInFirebase(code, name, category, price, stock);
                 }
             } else {
                 // Adding new item - check if code exists
@@ -1772,13 +2170,13 @@
                     }
                     
                     // Add new item
-                    addItemToFirebase(code, name, category, price);
+                    addItemToFirebase(code, name, category, price, stock);
                 });
             }
         });
 
         // Update item in Firebase
-        function updateItemInFirebase(code, name, category, price) {
+        function updateItemInFirebase(code, name, category, price, stock) {
             // Find the item key in Firebase
             itemsRef.once('value').then(snapshot => {
                 const items = snapshot.val() || {};
@@ -1801,7 +2199,8 @@
                     code,
                     name,
                     category,
-                    price
+                    price,
+                    stock
                 };
                 
                 // Update image if changed
@@ -1824,6 +2223,7 @@
                                                 name: name,
                                                 category: category,
                                                 price: price,
+                                                stock: stock,
                                                 image: updatedItem.image
                                             });
                                         }
@@ -1832,6 +2232,7 @@
                                     showNotification('Item updated successfully');
                                     resetForm();
                                     loadItemsForEditing();
+                                    loadStockItems();
                                 });
                             })
                             .catch(error => {
@@ -1854,7 +2255,8 @@
                                             code: code,
                                             name: name,
                                             category: category,
-                                            price: price
+                                            price: price,
+                                            stock: stock
                                         });
                                     }
                                 }
@@ -1862,6 +2264,7 @@
                                 showNotification('Item updated successfully');
                                 resetForm();
                                 loadItemsForEditing();
+                                loadStockItems();
                             });
                         })
                         .catch(error => {
@@ -1873,13 +2276,14 @@
         }
 
         // Add new item to Firebase
-        function addItemToFirebase(code, name, category, price) {
+        function addItemToFirebase(code, name, category, price, stock) {
             // Create new item
             const newItem = {
                 code,
                 name,
                 category,
-                price
+                price,
+                stock
             };
             
             // Add image if provided
@@ -1894,6 +2298,7 @@
                             showNotification('Item added successfully');
                             resetForm();
                             loadItemsForEditing();
+                            loadStockItems();
                         })
                         .catch(error => {
                             console.error('Error adding item:', error);
@@ -1908,6 +2313,7 @@
                         showNotification('Item added successfully');
                         resetForm();
                         loadItemsForEditing();
+                        loadStockItems();
                     })
                     .catch(error => {
                         console.error('Error adding item:', error);
@@ -1931,11 +2337,26 @@
             loadItems(category);
         });
 
+        // Clear stock search
+        clearStockSearchBtn.addEventListener('click', function() {
+            searchStockInput.value = '';
+            const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+            loadStockItems(category);
+        });
+
         // Search functionality
         searchItemsInput.addEventListener('input', function() {
             const activeCategoryTab = document.querySelector('.category-tabs .active');
             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
             loadItems(category);
+        });
+
+        // Stock search functionality
+        searchStockInput.addEventListener('input', function() {
+            const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+            loadStockItems(category);
         });
 
         // Show notification
