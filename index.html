@@ -666,6 +666,22 @@
             font-weight: 600;
         }
 
+        /* Edit Items Tab - All Items Section */
+        .all-items-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .edit-search-container {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -809,11 +825,17 @@
             
             <div style="margin-top: 30px;">
                 <h3>All Items</h3>
-                <div class="items-list" id="editItemsList">
-                    <!-- Items for editing will be loaded here -->
-                    <div class="empty-state">
-                        <div class="loading"></div>
-                        <p>Loading items...</p>
+                <div class="edit-search-container">
+                    <input type="text" class="search-box" id="editSearchItems" placeholder="Search items by code or name...">
+                    <button class="btn btn-primary" id="clearEditSearch">Clear</button>
+                </div>
+                <div class="all-items-container">
+                    <div class="items-list" id="editItemsList">
+                        <!-- Items for editing will be loaded here -->
+                        <div class="empty-state">
+                            <div class="loading"></div>
+                            <p>Loading items...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -971,6 +993,8 @@
         const stockItemsList = document.getElementById('stockItemsList');
         const searchStockInput = document.getElementById('searchStock');
         const clearStockSearchBtn = document.getElementById('clearStockSearch');
+        const editSearchInput = document.getElementById('editSearchItems');
+        const clearEditSearchBtn = document.getElementById('clearEditSearch');
 
         // Current item being edited
         let currentEditItem = null;
@@ -1317,67 +1341,81 @@
             
             itemsRef.once('value').then(snapshot => {
                 const items = snapshot.val() || [];
-                
-                if (Object.keys(items).length === 0) {
-                    editItemsList.innerHTML = `
-                        <div class="empty-state">
-                            <i>📦</i>
-                            <h3>No items in inventory</h3>
-                            <p>Add your first item using the form above</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                editItemsList.innerHTML = '';
-                
-                Object.values(items).forEach(item => {
-                    const itemRow = document.createElement('div');
-                    itemRow.className = 'item-row';
-                    itemRow.innerHTML = `
-                        <div class="item-image">
-                            <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
-                        </div>
-                        <div class="item-details">
-                            <div class="item-code">${item.code}</div>
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
-                            <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
-                        </div>
-                        <div class="item-actions">
-                            <button class="btn btn-primary btn-sm edit-item" data-code="${item.code}">Edit</button>
-                            <button class="btn btn-danger btn-sm delete-item" data-code="${item.code}">Delete</button>
-                        </div>
-                    `;
-                    editItemsList.appendChild(itemRow);
-                });
-                
-                // Add event listeners to edit buttons
-                document.querySelectorAll('.edit-item').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const code = this.getAttribute('data-code');
-                        editItem(code);
-                    });
-                });
-                
-                // Add event listeners to delete buttons
-                document.querySelectorAll('.delete-item').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const code = this.getAttribute('data-code');
-                        deleteItem(code);
-                    });
-                });
-
-                // Add click event to item images for preview
-                document.querySelectorAll('.item-image img').forEach(img => {
-                    img.addEventListener('click', function() {
-                        modal.style.display = "block";
-                        modalImg.src = this.src;
-                    });
-                });
+                displayItemsForEditing(items);
             }).catch(error => {
                 console.error('Error loading items for editing:', error);
                 showNotification('Error loading items', true);
+            });
+        }
+
+        // Display items for editing with search functionality
+        function displayItemsForEditing(items, searchTerm = '') {
+            editItemsList.innerHTML = '';
+            
+            let filteredItems = Object.values(items);
+            
+            // Filter by search term if any
+            if (searchTerm) {
+                filteredItems = filteredItems.filter(item => 
+                    item.code.toLowerCase().includes(searchTerm) || 
+                    item.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filteredItems.length === 0) {
+                editItemsList.innerHTML = `
+                    <div class="empty-state">
+                        <i>🔍</i>
+                        <h3>No items found</h3>
+                        <p>Try a different search</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredItems.forEach(item => {
+                const itemRow = document.createElement('div');
+                itemRow.className = 'item-row';
+                itemRow.innerHTML = `
+                    <div class="item-image">
+                        <img src="${item.image || DEFAULT_IMAGE}" alt="${item.name}" onerror="this.src='${DEFAULT_IMAGE}'">
+                    </div>
+                    <div class="item-details">
+                        <div class="item-code">${item.code}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-price">${CURRENCY} ${item.price?.toFixed(2) || '0.00'}</div>
+                        <div class="item-stock">Stock: ${item.stock !== undefined ? item.stock : 'N/A'}</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-primary btn-sm edit-item" data-code="${item.code}">Edit</button>
+                        <button class="btn btn-danger btn-sm delete-item" data-code="${item.code}">Delete</button>
+                    </div>
+                `;
+                editItemsList.appendChild(itemRow);
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-item').forEach(button => {
+                button.addEventListener('click', function() {
+                    const code = this.getAttribute('data-code');
+                    editItem(code);
+                });
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-item').forEach(button => {
+                button.addEventListener('click', function() {
+                    const code = this.getAttribute('data-code');
+                    deleteItem(code);
+                });
+            });
+
+            // Add click event to item images for preview
+            document.querySelectorAll('.item-image img').forEach(img => {
+                img.addEventListener('click', function() {
+                    modal.style.display = "block";
+                    modalImg.src = this.src;
+                });
             });
         }
 
@@ -2345,6 +2383,12 @@
             loadStockItems(category);
         });
 
+        // Clear edit search
+        clearEditSearchBtn.addEventListener('click', function() {
+            editSearchInput.value = '';
+            loadItemsForEditing();
+        });
+
         // Search functionality
         searchItemsInput.addEventListener('input', function() {
             const activeCategoryTab = document.querySelector('.category-tabs .active');
@@ -2357,6 +2401,15 @@
             const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
             loadStockItems(category);
+        });
+
+        // Edit items search functionality
+        editSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                displayItemsForEditing(items, searchTerm);
+            });
         });
 
         // Show notification
