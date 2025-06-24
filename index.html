@@ -10,6 +10,8 @@
     <!-- Add jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -39,6 +41,78 @@
             padding: 20px;
         }
 
+        /* Splash Screen Animation */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeOut 1s ease-in-out 3s forwards;
+        }
+
+        .splash-logo {
+            font-size: 5rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .splash-logo span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .splash-logo span:nth-child(1) { animation: slideUp 0.5s ease-out 0.2s forwards; }
+        .splash-logo span:nth-child(2) { animation: slideUp 0.5s ease-out 0.3s forwards; }
+        .splash-logo span:nth-child(3) { animation: slideUp 0.5s ease-out 0.4s forwards; }
+        .splash-logo span:nth-child(4) { animation: slideUp 0.5s ease-out 0.5s forwards; }
+        .splash-logo span:nth-child(5) { animation: slideUp 0.5s ease-out 0.6s forwards; }
+        .splash-logo span:nth-child(6) { animation: slideUp 0.5s ease-out 0.7s forwards; }
+        .splash-logo span:nth-child(7) { animation: slideUp 0.5s ease-out 0.8s forwards; }
+        .splash-logo span:nth-child(8) { animation: slideUp 0.5s ease-out 0.9s forwards; }
+        .splash-logo span:nth-child(9) { animation: slideUp 0.5s ease-out 1.0s forwards; }
+
+        .splash-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease-out 1.5s forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -46,6 +120,16 @@
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease-out 3.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         header {
@@ -148,6 +232,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: var(--transition);
+            position: relative;
         }
 
         .category-tab:hover {
@@ -157,6 +242,22 @@
         .category-tab.active {
             background-color: var(--secondary-color);
             color: white;
+        }
+
+        .category-tab .item-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
         }
 
         .items-container {
@@ -682,6 +783,72 @@
             gap: 10px;
         }
 
+        /* Catalog Management */
+        .catalog-management {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .catalog-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .catalog-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .catalog-item {
+            padding: 8px 16px;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .catalog-item:hover {
+            background-color: #ddd;
+        }
+
+        .catalog-item.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .catalog-item .item-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .catalog-item .delete-catalog {
+            margin-left: 8px;
+            color: #e74c3c;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .catalog-item:hover .delete-catalog {
+            opacity: 1;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -729,10 +896,24 @@
                 left: 10px;
                 font-size: 0.9rem;
             }
+
+            .catalog-form {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div class="splash-screen">
+        <div class="splash-logo">
+            <span>L</span><span>A</span><span>S</span><span>T</span>
+            <span> </span>
+            <span>H</span><span>U</span><span>N</span><span>T</span>
+        </div>
+        <div class="splash-subtitle">Purchase Order Management System</div>
+    </div>
+
     <div class="container">
         <header>
             <h1>Purchase Order Management System</h1>
@@ -821,6 +1002,18 @@
                 <button class="btn btn-success" id="saveItem">Save Item</button>
                 <button class="btn btn-danger" id="deleteItem" style="display: none;">Delete Item</button>
                 <button class="btn btn-primary" id="cancelEdit" style="display: none;">Cancel</button>
+            </div>
+            
+            <!-- Catalog Management Section -->
+            <div class="catalog-management">
+                <h3>Catalog Management</h3>
+                <div class="catalog-form">
+                    <input type="text" class="form-control" id="newCatalogName" placeholder="Enter new catalog name">
+                    <button class="btn btn-primary" id="addCatalog">Add Catalog</button>
+                </div>
+                <div class="catalog-list" id="catalogList">
+                    <!-- Catalogs will be loaded here -->
+                </div>
             </div>
             
             <div style="margin-top: 30px;">
@@ -995,16 +1188,21 @@
         const clearStockSearchBtn = document.getElementById('clearStockSearch');
         const editSearchInput = document.getElementById('editSearchItems');
         const clearEditSearchBtn = document.getElementById('clearEditSearch');
+        const newCatalogName = document.getElementById('newCatalogName');
+        const addCatalogBtn = document.getElementById('addCatalog');
+        const catalogList = document.getElementById('catalogList');
 
         // Current item being edited
         let currentEditItem = null;
         let currentImageFile = null;
         let currentPOItems = [];
         let allItems = [];
+        let catalogs = [];
 
         // Firebase references
         const itemsRef = database.ref('items');
         const poRef = database.ref('currentPO');
+        const catalogsRef = database.ref('catalogs');
 
         // Image modal functionality
         span.onclick = function() {
@@ -1043,6 +1241,7 @@
                         loadPO();
                     } else if (tabId === 'add') {
                         loadItemsForEditing();
+                        loadCatalogs();
                         resetForm();
                     } else if (tabId === 'stock') {
                         loadStockItems();
@@ -1070,7 +1269,7 @@
             tab.addEventListener('click', function() {
                 const category = this.getAttribute('data-category');
                 
-                document.querySelectorAll('#stock .category-tab').forEach(t => {
+                document.querySelectorAll('#stock .category-tabs .active').forEach(t => {
                     t.classList.remove('active');
                 });
                 this.classList.add('active');
@@ -1078,6 +1277,172 @@
                 loadStockItems(category);
             });
         });
+
+        // Load catalogs from Firebase
+        function loadCatalogs() {
+            catalogsRef.on('value', snapshot => {
+                catalogs = snapshot.val() || [];
+                displayCatalogs();
+            });
+        }
+
+        // Display catalogs
+        function displayCatalogs() {
+            catalogList.innerHTML = '';
+            
+            // Add default catalogs
+            const defaultCatalogs = [
+                { id: 'fiberglass', name: 'Fiberglass & Raw Materials' },
+                { id: 'paints', name: 'Paints' },
+                { id: 'sanding', name: 'Sanding & Cutting' },
+                { id: 'hardware', name: 'Hardware' },
+                { id: 'electric', name: 'Electrical' },
+                { id: 'drillbits', name: 'Drill Bits' },
+                { id: 'taperolls', name: 'Tape Rolls' },
+                { id: 'general', name: 'General Items' }
+            ];
+            
+            // Add custom catalogs
+            const allCatalogs = [...defaultCatalogs, ...Object.values(catalogs)];
+            
+            allCatalogs.forEach(catalog => {
+                const catalogItem = document.createElement('div');
+                catalogItem.className = 'catalog-item';
+                catalogItem.setAttribute('data-catalog', catalog.id);
+                catalogItem.innerHTML = `
+                    ${catalog.name}
+                    <span class="item-count">0</span>
+                    <span class="delete-catalog" data-catalog="${catalog.id}">
+                        <i class="fas fa-times"></i>
+                    </span>
+                `;
+                catalogList.appendChild(catalogItem);
+            });
+            
+            // Add click event to catalog items
+            document.querySelectorAll('.catalog-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Check if delete button was clicked
+                    if (e.target.closest('.delete-catalog')) {
+                        e.stopPropagation();
+                        const catalogId = e.target.closest('.delete-catalog').getAttribute('data-catalog');
+                        deleteCatalog(catalogId);
+                        return;
+                    }
+                    
+                    const catalogId = this.getAttribute('data-catalog');
+                    filterItemsByCatalog(catalogId);
+                });
+            });
+            
+            // Update item counts for each catalog
+            updateCatalogItemCounts();
+        }
+
+        // Filter items by catalog
+        function filterItemsByCatalog(catalogId) {
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                const filteredItems = Object.values(items).filter(item => item.category === catalogId);
+                
+                // Highlight selected catalog
+                document.querySelectorAll('.catalog-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`.catalog-item[data-catalog="${catalogId}"]`).classList.add('active');
+                
+                // Display filtered items
+                displayItemsForEditing(filteredItems);
+            });
+        }
+
+        // Update item counts for each catalog
+        function updateCatalogItemCounts() {
+            itemsRef.once('value').then(snapshot => {
+                const items = snapshot.val() || [];
+                
+                // Count items per catalog
+                const counts = {};
+                Object.values(items).forEach(item => {
+                    counts[item.category] = (counts[item.category] || 0) + 1;
+                });
+                
+                // Update counts in UI
+                document.querySelectorAll('.catalog-item').forEach(item => {
+                    const catalogId = item.getAttribute('data-catalog');
+                    const count = counts[catalogId] || 0;
+                    item.querySelector('.item-count').textContent = count;
+                });
+            });
+        }
+
+        // Add new catalog
+        addCatalogBtn.addEventListener('click', function() {
+            const catalogName = newCatalogName.value.trim();
+            
+            if (!catalogName) {
+                showNotification('Please enter a catalog name', true);
+                return;
+            }
+            
+            // Generate ID from name (lowercase, no spaces)
+            const catalogId = catalogName.toLowerCase().replace(/\s+/g, '-');
+            
+            // Check if catalog already exists
+            if (catalogs.some(c => c.id === catalogId)) {
+                showNotification('Catalog with this name already exists', true);
+                return;
+            }
+            
+            const newCatalog = {
+                id: catalogId,
+                name: catalogName
+            };
+            
+            catalogsRef.push(newCatalog)
+                .then(() => {
+                    showNotification('Catalog added successfully');
+                    newCatalogName.value = '';
+                })
+                .catch(error => {
+                    console.error('Error adding catalog:', error);
+                    showNotification('Error adding catalog', true);
+                });
+        });
+
+        // Delete catalog
+        function deleteCatalog(catalogId) {
+            if (!confirm('Are you sure you want to delete this catalog? Items in this catalog will not be deleted.')) {
+                return;
+            }
+            
+            // Find the catalog key in Firebase
+            catalogsRef.once('value').then(snapshot => {
+                const catalogs = snapshot.val() || {};
+                let catalogKey = null;
+                
+                for (const key in catalogs) {
+                    if (catalogs[key].id === catalogId) {
+                        catalogKey = key;
+                        break;
+                    }
+                }
+                
+                if (!catalogKey) {
+                    showNotification('Catalog not found', true);
+                    return;
+                }
+                
+                catalogsRef.child(catalogKey).remove()
+                    .then(() => {
+                        showNotification('Catalog deleted successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error deleting catalog:', error);
+                        showNotification('Error deleting catalog', true);
+                    });
+            });
+        }
 
         // Load items from Firebase
         function loadItems(category = 'all') {
@@ -1506,6 +1871,7 @@
                             
                             loadItemsForEditing();
                             loadStockItems();
+                            updateCatalogItemCounts();
                             
                             if (currentEditItem && currentEditItem.code === code) {
                                 resetForm();
@@ -2271,6 +2637,7 @@
                                     resetForm();
                                     loadItemsForEditing();
                                     loadStockItems();
+                                    updateCatalogItemCounts();
                                 });
                             })
                             .catch(error => {
@@ -2303,6 +2670,7 @@
                                 resetForm();
                                 loadItemsForEditing();
                                 loadStockItems();
+                                updateCatalogItemCounts();
                             });
                         })
                         .catch(error => {
@@ -2337,6 +2705,7 @@
                             resetForm();
                             loadItemsForEditing();
                             loadStockItems();
+                            updateCatalogItemCounts();
                         })
                         .catch(error => {
                             console.error('Error adding item:', error);
@@ -2352,6 +2721,7 @@
                         resetForm();
                         loadItemsForEditing();
                         loadStockItems();
+                        updateCatalogItemCounts();
                     })
                     .catch(error => {
                         console.error('Error adding item:', error);
@@ -2476,6 +2846,7 @@
             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
             loadItems(category);
             loadPO();
+            loadCatalogs();
         });
     </script>
 </body>
