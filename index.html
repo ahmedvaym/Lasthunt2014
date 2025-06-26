@@ -934,16 +934,9 @@
                 <button class="btn btn-primary" id="clearSearch">Clear</button>
             </div>
             
-            <div class="category-tabs">
+            <div class="category-tabs" id="categoryTabs">
                 <div class="category-tab active" data-category="all">All Items</div>
-                <div class="category-tab" data-category="fiberglass">Fiberglass & Raw Materials</div>
-                <div class="category-tab" data-category="paints">Paints</div>
-                <div class="category-tab" data-category="sanding">Sanding & Cutting</div>
-                <div class="category-tab" data-category="hardware">Hardware</div>
-                <div class="category-tab" data-category="electric">Electrical</div>
-                <div class="category-tab" data-category="drillbits">Drill Bits</div>
-                <div class="category-tab" data-category="taperolls">Tape Rolls</div>
-                <div class="category-tab" data-category="general">General Items</div>
+                <!-- Other category tabs will be loaded dynamically -->
             </div>
             
             <div class="items-container">
@@ -971,14 +964,8 @@
             <div class="form-group">
                 <label for="itemCategory" class="form-label">Category*</label>
                 <select class="form-control" id="itemCategory">
-                    <option value="fiberglass">Fiberglass & Raw Materials</option>
-                    <option value="paints">Paints</option>
-                    <option value="sanding">Sanding Disks & Cutting Wheels</option>
-                    <option value="hardware">Nails, Nuts, Washers, Screws</option>
-                    <option value="electric">Electrical Items</option>
-                    <option value="drillbits">Drill Bits</option>
-                    <option value="taperolls">Tape Rolls</option>
-                    <option value="general">General Items</option>
+                    <option value="">-- Select Category --</option>
+                    <!-- Categories will be loaded dynamically -->
                 </select>
             </div>
             <div class="form-group">
@@ -1103,10 +1090,11 @@
                 <button class="btn btn-primary" id="clearStockSearch">Clear</button>
             </div>
             
-            <div class="category-tabs">
+            <div class="category-tabs" id="stockCategoryTabs">
                 <div class="category-tab active" data-category="all">All Items</div>
                 <div class="category-tab" data-category="low">Low Stock</div>
                 <div class="category-tab" data-category="out">Out of Stock</div>
+                <!-- Other category tabs will be loaded dynamically -->
             </div>
             
             <div class="stock-view active" id="stockView">
@@ -1191,6 +1179,9 @@
         const newCatalogName = document.getElementById('newCatalogName');
         const addCatalogBtn = document.getElementById('addCatalog');
         const catalogList = document.getElementById('catalogList');
+        const categoryTabs = document.getElementById('categoryTabs');
+        const stockCategoryTabs = document.getElementById('stockCategoryTabs');
+        const itemCategorySelect = document.getElementById('itemCategory');
 
         // Current item being edited
         let currentEditItem = null;
@@ -1198,6 +1189,7 @@
         let currentPOItems = [];
         let allItems = [];
         let catalogs = [];
+        let categoryCounts = {};
 
         // Firebase references
         const itemsRef = database.ref('items');
@@ -1234,7 +1226,7 @@
                     
                     // Refresh views when switching tabs
                     if (tabId === 'browse') {
-                        const activeCategoryTab = document.querySelector('.category-tabs .active');
+                        const activeCategoryTab = document.querySelector('#categoryTabs .active');
                         const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
                         loadItems(category);
                     } else if (tabId === 'po') {
@@ -1250,43 +1242,187 @@
             });
         });
 
-        // Category tab switching (Browse tab)
-        document.querySelectorAll('#browse .category-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const category = this.getAttribute('data-category');
-                
-                document.querySelectorAll('#browse .category-tab').forEach(t => {
-                    t.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                loadItems(category);
-            });
-        });
-
-        // Category tab switching (Stock tab)
-        document.querySelectorAll('#stock .category-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const category = this.getAttribute('data-category');
-                
-                document.querySelectorAll('#stock .category-tabs .active').forEach(t => {
-                    t.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                loadStockItems(category);
-            });
-        });
-
         // Load catalogs from Firebase
         function loadCatalogs() {
             catalogsRef.on('value', snapshot => {
-                catalogs = snapshot.val() || [];
+                catalogs = [];
+                if (snapshot.exists()) {
+                    catalogs = Object.values(snapshot.val());
+                }
+                updateCategoryDropdown();
                 displayCatalogs();
+                updateCategoryTabs();
+                updateStockCategoryTabs();
             });
         }
 
-        // Display catalogs
+        // Update category dropdown in Add/Edit form
+        function updateCategoryDropdown() {
+            // Clear existing options except the first one
+            while (itemCategorySelect.options.length > 1) {
+                itemCategorySelect.remove(1);
+            }
+            
+            // Add default catalogs
+            const defaultCatalogs = [
+                { id: 'fiberglass', name: 'Fiberglass & Raw Materials' },
+                { id: 'paints', name: 'Paints' },
+                { id: 'sanding', name: 'Sanding & Cutting' },
+                { id: 'hardware', name: 'Hardware' },
+                { id: 'electric', name: 'Electrical' },
+                { id: 'drillbits', name: 'Drill Bits' },
+                { id: 'taperolls', name: 'Tape Rolls' },
+                { id: 'general', name: 'General Items' }
+            ];
+            
+            // Add custom catalogs
+            const allCatalogs = [...defaultCatalogs, ...catalogs];
+            
+            allCatalogs.forEach(catalog => {
+                const option = document.createElement('option');
+                option.value = catalog.id;
+                option.textContent = catalog.name;
+                itemCategorySelect.appendChild(option);
+            });
+        }
+
+        // Update category tabs in Browse tab
+        function updateCategoryTabs() {
+            // Clear existing tabs except "All Items"
+            const allItemsTab = categoryTabs.querySelector('.category-tab[data-category="all"]');
+            categoryTabs.innerHTML = '';
+            if (allItemsTab) {
+                categoryTabs.appendChild(allItemsTab);
+            } else {
+                const newAllItemsTab = document.createElement('div');
+                newAllItemsTab.className = 'category-tab active';
+                newAllItemsTab.setAttribute('data-category', 'all');
+                newAllItemsTab.textContent = 'All Items';
+                categoryTabs.appendChild(newAllItemsTab);
+            }
+            
+            // Add default catalogs
+            const defaultCatalogs = [
+                { id: 'fiberglass', name: 'Fiberglass & Raw Materials' },
+                { id: 'paints', name: 'Paints' },
+                { id: 'sanding', name: 'Sanding & Cutting' },
+                { id: 'hardware', name: 'Hardware' },
+                { id: 'electric', name: 'Electrical' },
+                { id: 'drillbits', name: 'Drill Bits' },
+                { id: 'taperolls', name: 'Tape Rolls' },
+                { id: 'general', name: 'General Items' }
+            ];
+            
+            // Add custom catalogs
+            const allCatalogs = [...defaultCatalogs, ...catalogs];
+            
+            allCatalogs.forEach(catalog => {
+                const catalogTab = document.createElement('div');
+                catalogTab.className = 'category-tab';
+                catalogTab.setAttribute('data-category', catalog.id);
+                catalogTab.innerHTML = `
+                    ${catalog.name}
+                    <span class="item-count">${categoryCounts[catalog.id] || 0}</span>
+                `;
+                categoryTabs.appendChild(catalogTab);
+            });
+            
+            // Add click event to category tabs
+            document.querySelectorAll('#categoryTabs .category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    
+                    document.querySelectorAll('#categoryTabs .category-tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    loadItems(category);
+                });
+            });
+        }
+
+        // Update category tabs in Stock Management tab
+        function updateStockCategoryTabs() {
+            // Clear existing tabs except "All Items", "Low Stock", "Out of Stock"
+            const allItemsTab = stockCategoryTabs.querySelector('.category-tab[data-category="all"]');
+            const lowStockTab = stockCategoryTabs.querySelector('.category-tab[data-category="low"]');
+            const outStockTab = stockCategoryTabs.querySelector('.category-tab[data-category="out"]');
+            
+            stockCategoryTabs.innerHTML = '';
+            
+            if (allItemsTab) {
+                stockCategoryTabs.appendChild(allItemsTab);
+            } else {
+                const newAllItemsTab = document.createElement('div');
+                newAllItemsTab.className = 'category-tab active';
+                newAllItemsTab.setAttribute('data-category', 'all');
+                newAllItemsTab.textContent = 'All Items';
+                stockCategoryTabs.appendChild(newAllItemsTab);
+            }
+            
+            if (lowStockTab) {
+                stockCategoryTabs.appendChild(lowStockTab);
+            } else {
+                const newLowStockTab = document.createElement('div');
+                newLowStockTab.className = 'category-tab';
+                newLowStockTab.setAttribute('data-category', 'low');
+                newLowStockTab.textContent = 'Low Stock';
+                stockCategoryTabs.appendChild(newLowStockTab);
+            }
+            
+            if (outStockTab) {
+                stockCategoryTabs.appendChild(outStockTab);
+            } else {
+                const newOutStockTab = document.createElement('div');
+                newOutStockTab.className = 'category-tab';
+                newOutStockTab.setAttribute('data-category', 'out');
+                newOutStockTab.textContent = 'Out of Stock';
+                stockCategoryTabs.appendChild(newOutStockTab);
+            }
+            
+            // Add default catalogs
+            const defaultCatalogs = [
+                { id: 'fiberglass', name: 'Fiberglass' },
+                { id: 'paints', name: 'Paints' },
+                { id: 'sanding', name: 'Sanding' },
+                { id: 'hardware', name: 'Hardware' },
+                { id: 'electric', name: 'Electrical' },
+                { id: 'drillbits', name: 'Drill Bits' },
+                { id: 'taperolls', name: 'Tape Rolls' },
+                { id: 'general', name: 'General' }
+            ];
+            
+            // Add custom catalogs
+            const allCatalogs = [...defaultCatalogs, ...catalogs];
+            
+            allCatalogs.forEach(catalog => {
+                const catalogTab = document.createElement('div');
+                catalogTab.className = 'category-tab';
+                catalogTab.setAttribute('data-category', catalog.id);
+                catalogTab.innerHTML = `
+                    ${catalog.name}
+                    <span class="item-count">${categoryCounts[catalog.id] || 0}</span>
+                `;
+                stockCategoryTabs.appendChild(catalogTab);
+            });
+            
+            // Add click event to category tabs
+            document.querySelectorAll('#stockCategoryTabs .category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    
+                    document.querySelectorAll('#stockCategoryTabs .category-tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    loadStockItems(category);
+                });
+            });
+        }
+
+        // Display catalogs in Add/Edit tab
         function displayCatalogs() {
             catalogList.innerHTML = '';
             
@@ -1303,7 +1439,7 @@
             ];
             
             // Add custom catalogs
-            const allCatalogs = [...defaultCatalogs, ...Object.values(catalogs)];
+            const allCatalogs = [...defaultCatalogs, ...catalogs];
             
             allCatalogs.forEach(catalog => {
                 const catalogItem = document.createElement('div');
@@ -1311,11 +1447,17 @@
                 catalogItem.setAttribute('data-catalog', catalog.id);
                 catalogItem.innerHTML = `
                     ${catalog.name}
-                    <span class="item-count">0</span>
+                    <span class="item-count">${categoryCounts[catalog.id] || 0}</span>
                     <span class="delete-catalog" data-catalog="${catalog.id}">
                         <i class="fas fa-times"></i>
                     </span>
                 `;
+                
+                // Don't show delete for default catalogs
+                if (defaultCatalogs.some(dc => dc.id === catalog.id)) {
+                    catalogItem.querySelector('.delete-catalog').style.display = 'none';
+                }
+                
                 catalogList.appendChild(catalogItem);
             });
             
@@ -1334,15 +1476,12 @@
                     filterItemsByCatalog(catalogId);
                 });
             });
-            
-            // Update item counts for each catalog
-            updateCatalogItemCounts();
         }
 
         // Filter items by catalog
         function filterItemsByCatalog(catalogId) {
             itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
+                const items = snapshot.val() || {};
                 const filteredItems = Object.values(items).filter(item => item.category === catalogId);
                 
                 // Highlight selected catalog
@@ -1356,106 +1495,66 @@
             });
         }
 
-        // Update item counts for each catalog
-        function updateCatalogItemCounts() {
-            itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
-                
-                // Count items per catalog
-                const counts = {};
-                Object.values(items).forEach(item => {
-                    counts[item.category] = (counts[item.category] || 0) + 1;
-                });
-                
-                // Update counts in UI
-                document.querySelectorAll('.catalog-item').forEach(item => {
-                    const catalogId = item.getAttribute('data-catalog');
-                    const count = counts[catalogId] || 0;
-                    item.querySelector('.item-count').textContent = count;
-                });
-            });
-        }
-
-        // Add new catalog
-        addCatalogBtn.addEventListener('click', function() {
-            const catalogName = newCatalogName.value.trim();
-            
-            if (!catalogName) {
-                showNotification('Please enter a catalog name', true);
-                return;
-            }
-            
-            // Generate ID from name (lowercase, no spaces)
-            const catalogId = catalogName.toLowerCase().replace(/\s+/g, '-');
-            
-            // Check if catalog already exists
-            if (catalogs.some(c => c.id === catalogId)) {
-                showNotification('Catalog with this name already exists', true);
-                return;
-            }
-            
-            const newCatalog = {
-                id: catalogId,
-                name: catalogName
-            };
-            
-            catalogsRef.push(newCatalog)
-                .then(() => {
-                    showNotification('Catalog added successfully');
-                    newCatalogName.value = '';
-                })
-                .catch(error => {
-                    console.error('Error adding catalog:', error);
-                    showNotification('Error adding catalog', true);
-                });
-        });
-
-        // Delete catalog
-        function deleteCatalog(catalogId) {
-            if (!confirm('Are you sure you want to delete this catalog? Items in this catalog will not be deleted.')) {
-                return;
-            }
-            
-            // Find the catalog key in Firebase
-            catalogsRef.once('value').then(snapshot => {
-                const catalogs = snapshot.val() || {};
-                let catalogKey = null;
-                
-                for (const key in catalogs) {
-                    if (catalogs[key].id === catalogId) {
-                        catalogKey = key;
-                        break;
-                    }
-                }
-                
-                if (!catalogKey) {
-                    showNotification('Catalog not found', true);
-                    return;
-                }
-                
-                catalogsRef.child(catalogKey).remove()
-                    .then(() => {
-                        showNotification('Catalog deleted successfully');
-                    })
-                    .catch(error => {
-                        console.error('Error deleting catalog:', error);
-                        showNotification('Error deleting catalog', true);
-                    });
-            });
-        }
-
         // Load items from Firebase
         function loadItems(category = 'all') {
             itemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
             
             itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
+                const items = snapshot.val() || {};
                 allItems = items; // Store all items for stock management
                 displayItems(items, category);
                 updateTotalItemsCount(items);
+                
+                // Update category counts
+                updateCategoryCounts(items);
             }).catch(error => {
                 console.error('Error loading items:', error);
                 showNotification('Error loading items', true);
+            });
+        }
+
+        // Update category counts
+        function updateCategoryCounts(items) {
+            categoryCounts = {};
+            
+            Object.values(items).forEach(item => {
+                if (item.category) {
+                    categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+                }
+            });
+            
+            // Update counts in category tabs
+            document.querySelectorAll('#categoryTabs .category-tab').forEach(tab => {
+                const category = tab.getAttribute('data-category');
+                if (category !== 'all') {
+                    const count = categoryCounts[category] || 0;
+                    const countSpan = tab.querySelector('.item-count');
+                    if (countSpan) {
+                        countSpan.textContent = count;
+                    }
+                }
+            });
+            
+            // Update counts in stock category tabs
+            document.querySelectorAll('#stockCategoryTabs .category-tab').forEach(tab => {
+                const category = tab.getAttribute('data-category');
+                if (category !== 'all' && category !== 'low' && category !== 'out') {
+                    const count = categoryCounts[category] || 0;
+                    const countSpan = tab.querySelector('.item-count');
+                    if (countSpan) {
+                        countSpan.textContent = count;
+                    }
+                }
+            });
+            
+            // Update counts in catalog items
+            document.querySelectorAll('.catalog-item').forEach(item => {
+                const catalogId = item.getAttribute('data-catalog');
+                const count = categoryCounts[catalogId] || 0;
+                const countSpan = item.querySelector('.item-count');
+                if (countSpan) {
+                    countSpan.textContent = count;
+                }
             });
         }
 
@@ -1549,7 +1648,7 @@
             stockItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading stock items...</p></div>';
             
             itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
+                const items = snapshot.val() || {};
                 allItems = items; // Store all items for stock management
                 displayStockItems(items, category);
             }).catch(error => {
@@ -1573,7 +1672,7 @@
                 );
             }
             
-            // Filter by stock status
+            // Filter by stock status or category
             if (category === 'low') {
                 filteredItems = filteredItems.filter(item => 
                     item.stock !== undefined && item.stock > 0 && item.stock <= LOW_STOCK_THRESHOLD
@@ -1582,6 +1681,8 @@
                 filteredItems = filteredItems.filter(item => 
                     item.stock !== undefined && item.stock <= 0
                 );
+            } else if (category !== 'all') {
+                filteredItems = filteredItems.filter(item => item.category === category);
             }
             
             if (filteredItems.length === 0) {
@@ -1590,7 +1691,8 @@
                         <i>📦</i>
                         <h3>No items found</h3>
                         <p>${category === 'all' ? 'No items in inventory' : 
-                           category === 'low' ? 'No low stock items' : 'No out of stock items'}</p>
+                           category === 'low' ? 'No low stock items' : 
+                           category === 'out' ? 'No out of stock items' : 'No items in this category'}</p>
                     </div>
                 `;
                 return;
@@ -1705,7 +1807,7 @@
             editItemsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading items...</p></div>';
             
             itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
+                const items = snapshot.val() || {};
                 displayItemsForEditing(items);
             }).catch(error => {
                 console.error('Error loading items for editing:', error);
@@ -1787,7 +1889,7 @@
         // Edit item
         function editItem(code) {
             itemsRef.once('value').then(snapshot => {
-                const items = snapshot.val() || [];
+                const items = snapshot.val() || {};
                 const item = Object.values(items).find(i => i.code === code);
                 
                 if (!item) {
@@ -1800,7 +1902,7 @@
                 // Fill the form
                 document.getElementById('itemCode').value = item.code;
                 document.getElementById('itemName').value = item.name;
-                document.getElementById('itemCategory').value = item.category;
+                document.getElementById('itemCategory').value = item.category || '';
                 document.getElementById('itemPrice').value = item.price || '';
                 document.getElementById('itemStock').value = item.stock !== undefined ? item.stock : '';
                 
@@ -1871,7 +1973,7 @@
                             
                             loadItemsForEditing();
                             loadStockItems();
-                            updateCatalogItemCounts();
+                            updateCategoryCounts(items);
                             
                             if (currentEditItem && currentEditItem.code === code) {
                                 resetForm();
@@ -1894,7 +1996,7 @@
         function resetForm() {
             document.getElementById('itemCode').value = '';
             document.getElementById('itemName').value = '';
-            document.getElementById('itemCategory').value = 'fiberglass';
+            document.getElementById('itemCategory').value = '';
             document.getElementById('itemPrice').value = '';
             document.getElementById('itemStock').value = '';
             
@@ -2016,7 +2118,7 @@
             poItemsContainer.innerHTML = '<div class="empty-state"><div class="loading"></div><p>Loading purchase order...</p></div>';
             
             poRef.on('value', snapshot => {
-                currentPOItems = snapshot.val() || [];
+                currentPOItems = snapshot.val() || {};
                 updatePOView(currentPOItems);
             }, error => {
                 console.error('Error loading PO:', error);
@@ -2029,7 +2131,7 @@
             if (!poItems) {
                 // If poItems not provided, get from Firebase
                 poRef.once('value').then(snapshot => {
-                    currentPOItems = snapshot.val() || [];
+                    currentPOItems = snapshot.val() || {};
                     updatePOView(currentPOItems);
                 });
                 return;
@@ -2157,7 +2259,7 @@
         // Print PO
         document.getElementById('printPO').addEventListener('click', function() {
             poRef.once('value').then(snapshot => {
-                const poItems = snapshot.val() || [];
+                const poItems = snapshot.val() || {};
                 
                 if (Object.keys(poItems).length === 0) {
                     showNotification('PO is empty. Add items first.', true);
@@ -2209,7 +2311,7 @@
         // Export as PDF
         exportPDFBtn.addEventListener('click', function() {
             poRef.once('value').then(snapshot => {
-                const poItems = snapshot.val() || [];
+                const poItems = snapshot.val() || {};
                 
                 if (Object.keys(poItems).length === 0) {
                     showNotification('PO is empty. Add items first.', true);
@@ -2415,7 +2517,7 @@
         // Share via Viber with PDF attachment
         shareViberBtn.addEventListener('click', async function() {
             poRef.once('value').then(async snapshot => {
-                const poItems = snapshot.val() || [];
+                const poItems = snapshot.val() || {};
                 
                 if (Object.keys(poItems).length === 0) {
                     showNotification('PO is empty. Add items first.', true);
@@ -2536,8 +2638,8 @@
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const stock = parseInt(document.getElementById('itemStock').value) || 0;
             
-            if (!code || !name) {
-                showNotification('Item code and name are required', true);
+            if (!code || !name || !category) {
+                showNotification('Item code, name and category are required', true);
                 return;
             }
             
@@ -2637,7 +2739,7 @@
                                     resetForm();
                                     loadItemsForEditing();
                                     loadStockItems();
-                                    updateCatalogItemCounts();
+                                    loadItems();
                                 });
                             })
                             .catch(error => {
@@ -2670,7 +2772,7 @@
                                 resetForm();
                                 loadItemsForEditing();
                                 loadStockItems();
-                                updateCatalogItemCounts();
+                                loadItems();
                             });
                         })
                         .catch(error => {
@@ -2705,7 +2807,7 @@
                             resetForm();
                             loadItemsForEditing();
                             loadStockItems();
-                            updateCatalogItemCounts();
+                            loadItems();
                         })
                         .catch(error => {
                             console.error('Error adding item:', error);
@@ -2721,7 +2823,7 @@
                         resetForm();
                         loadItemsForEditing();
                         loadStockItems();
-                        updateCatalogItemCounts();
+                        loadItems();
                     })
                     .catch(error => {
                         console.error('Error adding item:', error);
@@ -2740,7 +2842,7 @@
         // Clear search
         clearSearchBtn.addEventListener('click', function() {
             searchItemsInput.value = '';
-            const activeCategoryTab = document.querySelector('.category-tabs .active');
+            const activeCategoryTab = document.querySelector('#categoryTabs .active');
             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
             loadItems(category);
         });
@@ -2761,7 +2863,7 @@
 
         // Search functionality
         searchItemsInput.addEventListener('input', function() {
-            const activeCategoryTab = document.querySelector('.category-tabs .active');
+            const activeCategoryTab = document.querySelector('#categoryTabs .active');
             const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
             loadItems(category);
         });
@@ -2781,6 +2883,75 @@
                 displayItemsForEditing(items, searchTerm);
             });
         });
+
+        // Add new catalog
+        addCatalogBtn.addEventListener('click', function() {
+            const catalogName = newCatalogName.value.trim();
+            
+            if (!catalogName) {
+                showNotification('Please enter a catalog name', true);
+                return;
+            }
+            
+            // Generate ID from name (lowercase, no spaces)
+            const catalogId = catalogName.toLowerCase().replace(/\s+/g, '-');
+            
+            // Check if catalog already exists
+            if (catalogs.some(c => c.id === catalogId) || 
+                ['fiberglass', 'paints', 'sanding', 'hardware', 'electric', 'drillbits', 'taperolls', 'general'].includes(catalogId)) {
+                showNotification('Catalog with this name already exists', true);
+                return;
+            }
+            
+            const newCatalog = {
+                id: catalogId,
+                name: catalogName
+            };
+            
+            catalogsRef.push(newCatalog)
+                .then(() => {
+                    showNotification('Catalog added successfully');
+                    newCatalogName.value = '';
+                })
+                .catch(error => {
+                    console.error('Error adding catalog:', error);
+                    showNotification('Error adding catalog', true);
+                });
+        });
+
+        // Delete catalog
+        function deleteCatalog(catalogId) {
+            if (!confirm('Are you sure you want to delete this catalog? Items in this catalog will not be deleted.')) {
+                return;
+            }
+            
+            // Find the catalog key in Firebase
+            catalogsRef.once('value').then(snapshot => {
+                const catalogs = snapshot.val() || {};
+                let catalogKey = null;
+                
+                for (const key in catalogs) {
+                    if (catalogs[key].id === catalogId) {
+                        catalogKey = key;
+                        break;
+                    }
+                }
+                
+                if (!catalogKey) {
+                    showNotification('Catalog not found', true);
+                    return;
+                }
+                
+                catalogsRef.child(catalogKey).remove()
+                    .then(() => {
+                        showNotification('Catalog deleted successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error deleting catalog:', error);
+                        showNotification('Error deleting catalog', true);
+                    });
+            });
+        }
 
         // Show notification
         function showNotification(message, isError = false) {
@@ -2842,9 +3013,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             // Load initial data
-            const activeCategoryTab = document.querySelector('.category-tabs .active');
-            const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
-            loadItems(category);
+            loadItems('all');
             loadPO();
             loadCatalogs();
         });
