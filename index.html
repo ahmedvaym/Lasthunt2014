@@ -326,9 +326,14 @@
         .item-name {
             font-weight: 600;
             margin-bottom: 5px;
-            white-space: nowrap;
+            white-space: normal;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.3;
+            max-height: 2.6em;
         }
 
         .item-price {
@@ -671,6 +676,28 @@
             flex-direction: column;
             gap: 10px;
             margin-top: 15px;
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Custom scrollbar for stock items */
+        .stock-items-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .stock-items-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .stock-items-list::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 10px;
+        }
+
+        .stock-items-list::-webkit-scrollbar-thumb:hover {
+            background: #95a5a6;
         }
 
         .stock-item-row {
@@ -727,10 +754,14 @@
         .stock-item-name {
             font-weight: 600;
             margin-bottom: 5px;
-            white-space: nowrap;
+            white-space: normal;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-size: 0.9rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.3;
+            max-height: 2.6em;
         }
 
         .stock-item-stock {
@@ -751,6 +782,53 @@
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
             text-align: center;
+        }
+
+        /* Stock status indicators */
+        .stock-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stock-in {
+            background-color: #e8f5e9;
+            color: #27ae60;
+        }
+
+        .stock-low {
+            background-color: #fff3e0;
+            color: #f39c12;
+        }
+
+        .stock-out {
+            background-color: #ffebee;
+            color: #e74c3c;
+        }
+
+        /* Stock filter buttons */
+        .stock-filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stock-filter-btn {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .stock-filter-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
         }
 
         /* Total items counter */
@@ -899,6 +977,10 @@
 
             .catalog-form {
                 flex-direction: column;
+            }
+
+            .stock-filter-buttons {
+                flex-wrap: wrap;
             }
         }
     </style>
@@ -1090,10 +1172,15 @@
                 <button class="btn btn-primary" id="clearStockSearch">Clear</button>
             </div>
             
+            <div class="stock-filter-buttons">
+                <button class="stock-filter-btn active" data-filter="all">All Items</button>
+                <button class="stock-filter-btn" data-filter="in">In Stock</button>
+                <button class="stock-filter-btn" data-filter="low">Low Stock</button>
+                <button class="stock-filter-btn" data-filter="out">Out of Stock</button>
+            </div>
+            
             <div class="category-tabs" id="stockCategoryTabs">
-                <div class="category-tab active" data-category="all">All Items</div>
-                <div class="category-tab" data-category="low">Low Stock</div>
-                <div class="category-tab" data-category="out">Out of Stock</div>
+                <div class="category-tab active" data-category="all">All Categories</div>
                 <!-- Other category tabs will be loaded dynamically -->
             </div>
             
@@ -1182,6 +1269,7 @@
         const categoryTabs = document.getElementById('categoryTabs');
         const stockCategoryTabs = document.getElementById('stockCategoryTabs');
         const itemCategorySelect = document.getElementById('itemCategory');
+        const stockFilterButtons = document.querySelectorAll('.stock-filter-btn');
 
         // Current item being edited
         let currentEditItem = null;
@@ -1190,6 +1278,7 @@
         let allItems = [];
         let catalogs = [];
         let categoryCounts = {};
+        let currentStockFilter = 'all';
 
         // Firebase references
         const itemsRef = database.ref('items');
@@ -1346,8 +1435,6 @@
         function updateStockCategoryTabs() {
             // Clear existing tabs except "All Items", "Low Stock", "Out of Stock"
             const allItemsTab = stockCategoryTabs.querySelector('.category-tab[data-category="all"]');
-            const lowStockTab = stockCategoryTabs.querySelector('.category-tab[data-category="low"]');
-            const outStockTab = stockCategoryTabs.querySelector('.category-tab[data-category="out"]');
             
             stockCategoryTabs.innerHTML = '';
             
@@ -1357,28 +1444,8 @@
                 const newAllItemsTab = document.createElement('div');
                 newAllItemsTab.className = 'category-tab active';
                 newAllItemsTab.setAttribute('data-category', 'all');
-                newAllItemsTab.textContent = 'All Items';
+                newAllItemsTab.textContent = 'All Categories';
                 stockCategoryTabs.appendChild(newAllItemsTab);
-            }
-            
-            if (lowStockTab) {
-                stockCategoryTabs.appendChild(lowStockTab);
-            } else {
-                const newLowStockTab = document.createElement('div');
-                newLowStockTab.className = 'category-tab';
-                newLowStockTab.setAttribute('data-category', 'low');
-                newLowStockTab.textContent = 'Low Stock';
-                stockCategoryTabs.appendChild(newLowStockTab);
-            }
-            
-            if (outStockTab) {
-                stockCategoryTabs.appendChild(outStockTab);
-            } else {
-                const newOutStockTab = document.createElement('div');
-                newOutStockTab.className = 'category-tab';
-                newOutStockTab.setAttribute('data-category', 'out');
-                newOutStockTab.textContent = 'Out of Stock';
-                stockCategoryTabs.appendChild(newOutStockTab);
             }
             
             // Add default catalogs
@@ -1538,7 +1605,7 @@
             // Update counts in stock category tabs
             document.querySelectorAll('#stockCategoryTabs .category-tab').forEach(tab => {
                 const category = tab.getAttribute('data-category');
-                if (category !== 'all' && category !== 'low' && category !== 'out') {
+                if (category !== 'all') {
                     const count = categoryCounts[category] || 0;
                     const countSpan = tab.querySelector('.item-count');
                     if (countSpan) {
@@ -1672,16 +1739,23 @@
                 );
             }
             
-            // Filter by stock status or category
-            if (category === 'low') {
+            // Filter by stock status
+            if (currentStockFilter === 'in') {
+                filteredItems = filteredItems.filter(item => 
+                    item.stock !== undefined && item.stock > LOW_STOCK_THRESHOLD
+                );
+            } else if (currentStockFilter === 'low') {
                 filteredItems = filteredItems.filter(item => 
                     item.stock !== undefined && item.stock > 0 && item.stock <= LOW_STOCK_THRESHOLD
                 );
-            } else if (category === 'out') {
+            } else if (currentStockFilter === 'out') {
                 filteredItems = filteredItems.filter(item => 
                     item.stock !== undefined && item.stock <= 0
                 );
-            } else if (category !== 'all') {
+            }
+            
+            // Filter by category if not 'all'
+            if (category !== 'all') {
                 filteredItems = filteredItems.filter(item => item.category === category);
             }
             
@@ -1691,8 +1765,9 @@
                         <i>📦</i>
                         <h3>No items found</h3>
                         <p>${category === 'all' ? 'No items in inventory' : 
-                           category === 'low' ? 'No low stock items' : 
-                           category === 'out' ? 'No out of stock items' : 'No items in this category'}</p>
+                           currentStockFilter === 'in' ? 'No in stock items' : 
+                           currentStockFilter === 'low' ? 'No low stock items' : 
+                           currentStockFilter === 'out' ? 'No out of stock items' : 'No items in this category'}</p>
                     </div>
                 `;
                 return;
@@ -1709,21 +1784,23 @@
                 const stockItemRow = document.createElement('div');
                 stockItemRow.className = 'stock-item-row';
                 
-                // Determine stock status color
-                let stockStatus = 'N/A';
-                let stockColor = '#7f8c8d';
+                // Determine stock status
+                let stockStatus = '';
+                let stockClass = '';
                 
                 if (item.stock !== undefined) {
                     if (item.stock <= 0) {
                         stockStatus = 'Out of Stock';
-                        stockColor = '#e74c3c';
+                        stockClass = 'stock-out';
                     } else if (item.stock <= LOW_STOCK_THRESHOLD) {
                         stockStatus = `Low Stock (${item.stock})`;
-                        stockColor = '#f39c12';
+                        stockClass = 'stock-low';
                     } else {
                         stockStatus = `In Stock (${item.stock})`;
-                        stockColor = '#27ae60';
+                        stockClass = 'stock-in';
                     }
+                } else {
+                    stockStatus = 'N/A';
                 }
                 
                 stockItemRow.innerHTML = `
@@ -1733,7 +1810,9 @@
                     <div class="stock-item-details">
                         <div class="stock-item-code">${item.code}</div>
                         <div class="stock-item-name">${item.name}</div>
-                        <div class="stock-item-stock" style="color: ${stockColor}">${stockStatus}</div>
+                        <div class="stock-item-stock">
+                            <span class="stock-status ${stockClass}">${stockStatus}</span>
+                        </div>
                     </div>
                     <div class="stock-item-actions">
                         <input type="number" class="stock-input" value="${item.stock !== undefined ? item.stock : ''}" placeholder="Stock" min="0">
@@ -2952,6 +3031,25 @@
                     });
             });
         }
+
+        // Stock filter buttons
+        stockFilterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                currentStockFilter = filter;
+                
+                // Update active button
+                stockFilterButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Reload stock items with current filter
+                const activeCategoryTab = document.querySelector('#stock .category-tabs .active');
+                const category = activeCategoryTab ? activeCategoryTab.getAttribute('data-category') : 'all';
+                loadStockItems(category);
+            });
+        });
 
         // Show notification
         function showNotification(message, isError = false) {
